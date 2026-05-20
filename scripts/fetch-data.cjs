@@ -47,7 +47,7 @@ function isStockNews(title) {
 function rowsToNews(rows) {
   return rows
     .filter(r => r.title && r.cat)
-    .filter(r => !(r.cat === 'own' && isStockNews(r.title))) // 자사 + 증시 뉴스 제외
+    .filter(r => !((r.cat === 'own' || r.cat === 'competitor') && isStockNews(r.title)))
     .map(r => ({
       id: r.id,
       cat: r.cat,
