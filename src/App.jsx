@@ -130,6 +130,7 @@ export default function App() {
           {!loading && error && <ErrorView error={error} onRetry={loadData} />}
           {!loading && !error && (
             <>
+              {!activeCat && <HeroBanner />}
               {featured.length > 0 && <ConcernsBanner featured={featured} />}
 
               {activeCat ? (
@@ -233,6 +234,22 @@ function Sidebar({ activeCat, activeSub, news, onCatClick, onSubClick, onHomeCli
         })}
       </div>
     </aside>
+  );
+}
+
+// ━━━━━━━━━━ Hero Banner (Main Slogan) ━━━━━━━━━━
+function HeroBanner() {
+  return (
+    <div className="bb-hero">
+      <div className="bb-hero-eyebrow">SAMSUNG SDI · SMALL BATTERY</div>
+      <h2 className="bb-hero-title">
+        전동공구에서 <span className="accent">우주</span>까지
+      </h2>
+      <div className="bb-hero-divider"></div>
+      <p className="bb-hero-subtitle">
+        삼성 SDI 소형 배터리의 무한한 확장
+      </p>
+    </div>
   );
 }
 
@@ -541,6 +558,72 @@ const globalStyles = `
   /* ━━━ Content ━━━ */
   .bb-content { min-width: 0; }
 
+  /* ━━━ Hero Banner (Main Slogan) ━━━ */
+  .bb-hero {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F0F7FB 100%);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--primary);
+    border-radius: 6px;
+    padding: 44px 36px;
+    margin-bottom: 22px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .bb-hero::before {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(44,125,196,0.10) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .bb-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; left: -50px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(91,168,217,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .bb-hero-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--primary);
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .bb-hero-title {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    line-height: 1.25;
+    position: relative;
+    margin: 0 0 4px;
+  }
+  .bb-hero-title .accent {
+    color: var(--primary);
+    font-style: italic;
+  }
+  .bb-hero-divider {
+    width: 42px;
+    height: 3px;
+    background: var(--primary);
+    margin: 18px auto;
+    border-radius: 2px;
+    position: relative;
+  }
+  .bb-hero-subtitle {
+    font-size: 16px;
+    color: var(--ink-mute);
+    letter-spacing: 0.02em;
+    position: relative;
+    font-weight: 500;
+    margin: 0;
+  }
+
   /* ━━━ Concerns Banner ━━━ */
   .bb-concerns { background: linear-gradient(135deg, #1F5F9E 0%, #2C7DC4 100%); color: #fff; border-radius: 4px; padding: 22px 26px; margin-bottom: 22px; display: flex; gap: 24px; align-items: center; position: relative; overflow: hidden; flex-wrap: wrap; }
   .bb-concerns::before { content: ''; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
@@ -598,7 +681,7 @@ const globalStyles = `
   .bb-article-row:hover .bb-article-arrow { opacity: 1; }
 
   /* ━━━ Category Grid (Home) ━━━ */
-  .bb-cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .bb-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
   .bb-cat-card { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px 18px; cursor: pointer; transition: all 0.15s; }
   .bb-cat-card:hover { border-color: var(--primary); box-shadow: 0 4px 14px rgba(44,125,196,0.1); transform: translateY(-2px); }
   .bb-cat-card-header { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line-light); margin-bottom: 14px; }
