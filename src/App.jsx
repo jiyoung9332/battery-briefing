@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink } from 'lucide-react';
+import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb } from 'lucide-react';
 
 // 카테고리 정의 (기존과 동일)
 const CATEGORIES = [
@@ -36,6 +36,18 @@ const SUB_LABEL = {
   'samsung-mx': '삼성전자 MX', tti: 'TTI', bosch: 'Bosch', volvo: 'Volvo',
   bmw: 'BMW', vwg: 'VWG', spacex: 'Space X', hyundai: '현대자동차', rivian: 'Rivian',
 };
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⬇️  여기를 직접 수정하세요! 소형 기획그룹 고민거리 목록
+// ⬇️  항목 추가/삭제도 자유롭게 가능합니다 (쉼표로 구분)
+// ⬇️  편집 후 Commit changes 하면 사이트에 바로 반영됩니다
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const PLANNING_DISCUSSIONS = [
+  '여기에 첫 번째 고민거리를 작성하세요',
+  '여기에 두 번째 고민거리를 작성하세요',
+  '여기에 세 번째 고민거리를 작성하세요',
+];
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export default function App() {
   const [news, setNews] = useState([]);
@@ -280,19 +292,36 @@ function ConcernsBanner({ featured }) {
   );
 }
 
+// ━━━━━━━━━━ 소형 기획그룹 고민해봅시다 ━━━━━━━━━━
+function PlanningDiscussions() {
+  return (
+    <div className="bb-planning">
+      <div className="bb-planning-header">
+        <div className="bb-planning-icon">
+          <Lightbulb size={22} color="#E89611" strokeWidth={2.2} fill="#FFE082" />
+        </div>
+        <div>
+          <div className="bb-planning-title">소형 기획그룹 고민해봅시다 💭</div>
+          <div className="bb-planning-desc">함께 논의해야 할 안건들</div>
+        </div>
+      </div>
+      <div className="bb-planning-list">
+        {PLANNING_DISCUSSIONS.map((item, idx) => (
+          <div key={idx} className="bb-planning-item">
+            <div className="bb-planning-num">{idx + 1}</div>
+            <div className="bb-planning-text">{item}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ━━━━━━━━━━ Home View ━━━━━━━━━━
 function HomeView({ news, onCatClick }) {
   return (
     <>
-      <div className="bb-page-header">
-        <div className="bb-page-title-area">
-          <div className="bb-page-icon"><Star size={20} color="#2C7DC4" strokeWidth={2.2} /></div>
-          <div>
-            <div className="bb-page-title">전체 카테고리</div>
-            <div className="bb-page-desc">왼쪽 사이드바에서 카테고리를 선택하거나, 아래 카드에서 바로 이동하세요</div>
-          </div>
-        </div>
-      </div>
+      <PlanningDiscussions />
 
       <div className="bb-cat-grid">
         {CATEGORIES.map(cat => {
@@ -557,6 +586,93 @@ const globalStyles = `
 
   /* ━━━ Content ━━━ */
   .bb-content { min-width: 0; }
+
+  /* ━━━ 소형 기획그룹 고민해봅시다 ━━━ */
+  .bb-planning {
+    background: linear-gradient(135deg, #FFFCF0 0%, #FFF8E1 100%);
+    border: 1px solid #F3E2A8;
+    border-left: 4px solid #E89611;
+    border-radius: 6px;
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bb-planning::after {
+    content: '✨';
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-size: 18px;
+    opacity: 0.6;
+  }
+  .bb-planning-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed #F0DA98;
+  }
+  .bb-planning-icon {
+    width: 42px;
+    height: 42px;
+    background: #FFF3CD;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .bb-planning-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #5C4117;
+    letter-spacing: -0.015em;
+  }
+  .bb-planning-desc {
+    font-size: 13px;
+    color: #8A7340;
+    margin-top: 2px;
+  }
+  .bb-planning-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .bb-planning-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 8px 4px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .bb-planning-item:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .bb-planning-num {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #F39C12 0%, #E89611 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(232, 150, 17, 0.3);
+  }
+  .bb-planning-text {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: #4A3D1A;
+    padding-top: 3px;
+    font-weight: 500;
+    flex: 1;
+  }
 
   /* ━━━ Hero Banner (Main Slogan) ━━━ */
   .bb-hero {
