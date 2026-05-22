@@ -191,7 +191,7 @@ function Sidebar({ activeCat, activeSub, news, onCatClick, onSubClick, onHomeCli
           className={`bb-menu-item ${!activeCat ? 'active' : ''}`}
           onClick={onHomeClick}
         >
-          <Home size={15} style={{ marginRight: 8, verticalAlign: -2 }} />
+          <Home size={17} style={{ marginRight: 10, verticalAlign: -3 }} />
           전체 보기
           <span className="bb-count">{news.length}</span>
         </div>
@@ -516,27 +516,27 @@ const globalStyles = `
   .bb-total-count { font-size: 12px; color: var(--ink-mute); background: var(--bg); padding: 4px 10px; border-radius: 12px; font-weight: 500; }
 
   /* ━━━ Layout ━━━ */
-  .bb-layout { display: grid; grid-template-columns: 230px 1fr; gap: 20px; padding: 20px 28px 60px; max-width: 1400px; margin: 0 auto; }
+  .bb-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; padding: 20px 28px 60px; max-width: 1400px; margin: 0 auto; }
 
   /* ━━━ Sidebar ━━━ */
   .bb-sidebar { background: #fff; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; align-self: start; position: sticky; top: 80px; }
-  .bb-sidebar-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); padding: 22px 20px; color: #fff; position: relative; overflow: hidden; }
-  .bb-sidebar-header::after { content: '🔋'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 32px; opacity: 0.3; }
-  .bb-sidebar-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 2px; }
-  .bb-sidebar-sub { font-size: 10px; opacity: 0.85; letter-spacing: 0.08em; }
-  .bb-menu-list { padding: 6px 0; }
-  .bb-menu-item { padding: 13px 20px; font-size: 14px; font-weight: 500; color: var(--ink); border-left: 3px solid transparent; cursor: pointer; transition: all 0.15s; user-select: none; position: relative; }
+  .bb-sidebar-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); padding: 28px 24px; color: #fff; position: relative; overflow: hidden; }
+  .bb-sidebar-header::after { content: '🔋'; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 40px; opacity: 0.3; }
+  .bb-sidebar-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .bb-sidebar-sub { font-size: 11px; opacity: 0.85; letter-spacing: 0.1em; }
+  .bb-menu-list { padding: 8px 0; }
+  .bb-menu-item { padding: 18px 24px; font-size: 17px; font-weight: 600; color: var(--ink); border-left: 4px solid transparent; cursor: pointer; transition: all 0.15s; user-select: none; position: relative; letter-spacing: -0.01em; }
   .bb-menu-item:hover { background: var(--bg); color: var(--primary-dark); }
-  .bb-menu-item.active { color: var(--primary); border-left-color: var(--primary); background: var(--primary-bg); font-weight: 600; }
-  .bb-count { float: right; font-size: 11px; color: var(--ink-faint); background: var(--bg); padding: 1px 7px; border-radius: 10px; font-weight: 500; }
+  .bb-menu-item.active { color: var(--primary); border-left-color: var(--primary); background: var(--primary-bg); font-weight: 700; }
+  .bb-count { float: right; font-size: 13px; color: var(--ink-faint); background: var(--bg); padding: 3px 10px; border-radius: 12px; font-weight: 600; }
   .bb-menu-item.active .bb-count { background: #fff; color: var(--primary); }
-  .bb-submenu { background: var(--bg); padding: 4px 0; border-top: 1px solid var(--line-light); border-bottom: 1px solid var(--line-light); }
-  .bb-submenu-item { padding: 9px 20px 9px 36px; font-size: 13px; color: var(--ink-mute); cursor: pointer; transition: all 0.15s; user-select: none; position: relative; }
-  .bb-submenu-item::before { content: ''; position: absolute; left: 24px; top: 50%; width: 4px; height: 4px; background: var(--line); border-radius: 50%; }
+  .bb-submenu { background: var(--bg); padding: 6px 0; border-top: 1px solid var(--line-light); border-bottom: 1px solid var(--line-light); }
+  .bb-submenu-item { padding: 12px 24px 12px 42px; font-size: 14.5px; color: var(--ink-mute); cursor: pointer; transition: all 0.15s; user-select: none; position: relative; font-weight: 500; }
+  .bb-submenu-item::before { content: ''; position: absolute; left: 28px; top: 50%; width: 5px; height: 5px; background: var(--line); border-radius: 50%; }
   .bb-submenu-item:hover { color: var(--primary); background: rgba(255,255,255,0.6); }
-  .bb-submenu-item.active { color: var(--primary); font-weight: 600; }
+  .bb-submenu-item.active { color: var(--primary); font-weight: 700; }
   .bb-submenu-item.active::before { background: var(--primary); }
-  .bb-submenu-item .bb-count { background: transparent; font-size: 10.5px; }
+  .bb-submenu-item .bb-count { background: transparent; font-size: 12px; }
 
   /* ━━━ Content ━━━ */
   .bb-content { min-width: 0; }
