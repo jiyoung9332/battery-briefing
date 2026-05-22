@@ -606,6 +606,8 @@ const globalStyles = `
   .bb-hero-title .accent {
     color: var(--primary);
     font-style: italic;
+    padding: 0 0.12em 0 0.08em;
+    margin: 0 0.04em;
   }
   .bb-hero-divider {
     width: 42px;
