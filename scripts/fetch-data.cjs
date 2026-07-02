@@ -106,13 +106,14 @@ function callGemini(title, originalSummary) {
       reject(new Error('GEMINI_API_KEY not set'));
       return;
     }
-    
-    const prompt = `당신은 배터리 산업 전문 기자입니다. 다음 뉴스를 한국어로 2문장으로 요약해주세요.
+
+    const prompt = `당신은 배터리 산업 전문 기자입니다. 다음 뉴스를 한국어로 3~4문장으로 충실하게 요약해주세요.
 
 요구사항:
-- 첫 문장: 핵심 사실 (무엇이/누가/언제 일어났는지)
-- 둘째 문장: 배경, 영향, 또는 시사점
-- 군더더기 없이 명확하게
+- 첫 문장: 핵심 사실 (누가 / 무엇을 / 언제 / 어디서)
+- 이후 문장: 관련 수치, 기업명, 배경을 구체적으로 담고, 배터리 업계에 주는 영향이나 시사점까지 설명
+- 각 문장이 자연스럽게 이어지는 완결된 문단으로 작성 (끊기거나 단어만 나열하지 말 것)
+- 너무 짧지 않게, 읽고 바로 이해되도록 충분히 서술
 - 객관적이고 전문적인 톤
 - 절대 마크다운(**, *, # 등) 사용하지 말 것
 - 절대 "요약:" 같은 라벨 붙이지 말 것
@@ -121,15 +122,15 @@ function callGemini(title, originalSummary) {
 원문: ${originalSummary}
 
 요약:`;
-    
+
     const payload = JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.3,
-        maxOutputTokens: 250,
+        maxOutputTokens: 500,
       }
     });
-    
+
     const options = {
       hostname: 'generativelanguage.googleapis.com',
       port: 443,
@@ -141,7 +142,7 @@ function callGemini(title, originalSummary) {
       },
       timeout: 30000,
     };
-    
+
     const req = https.request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -170,7 +171,7 @@ function callGemini(title, originalSummary) {
         }
       });
     });
-    
+
     req.on('error', reject);
     req.on('timeout', () => {
       req.destroy();
@@ -192,29 +193,29 @@ async function applyAISummaries(news, cache) {
   let newSummaryCount = 0;
   let skippedCount = 0;
   let errorCount = 0;
-  
+
   for (const article of news) {
     const key = cacheKey(article);
-    
+
     // 1. 캐시에 있으면 그대로 사용
     if (cache[key]) {
       article.summary = cache[key];
       cachedCount++;
       continue;
     }
-    
+
     // 2. 원본이 너무 짧으면 스킵 (요약 가치 없음)
     if (!article.summary || article.summary.length < 30) {
       skippedCount++;
       continue;
     }
-    
+
     // 3. 이번 실행에서 충분히 처리했으면 다음 실행으로 미룸
     if (newSummaryCount >= MAX_NEW_SUMMARIES_PER_RUN) {
       skippedCount++;
       continue;
     }
-    
+
     // 4. Gemini 호출
     try {
       const aiSummary = await callGemini(article.title, article.summary);
@@ -241,7 +242,7 @@ async function applyAISummaries(news, cache) {
       await sleep(10000);
     }
   }
-  
+
   console.log(`\n━━━ AI 요약 결과 ━━━`);
   console.log(`✓ 캐시 활용: ${cachedCount}건`);
   console.log(`✓ 신규 요약: ${newSummaryCount}건`);
@@ -254,14 +255,14 @@ async function applyAISummaries(news, cache) {
 (async () => {
   try {
     console.log('━━━ Battery Briefing 데이터 수집 시작 ━━━\n');
-    
+
     console.log('📊 구글 시트에서 뉴스 가져오는 중...');
     const newsRows = await fetchSheet('뉴스');
     console.log(`✓ ${newsRows.length}건 가져옴`);
-    
+
     const allNews = rowsToNews(newsRows);
     console.log(`✓ 필터링 후 ${allNews.length}건\n`);
-    
+
     // AI 요약 적용
     if (GEMINI_API_KEY) {
       console.log('🤖 Gemini AI 요약 적용 중...');
@@ -272,9 +273,9 @@ async function applyAISummaries(news, cache) {
     } else {
       console.warn('\n⚠ GEMINI_API_KEY 환경변수가 설정되지 않음. AI 요약 건너뜀.\n');
     }
-    
+
     const featured = allNews.filter(n => n.featured).slice(0, 4);
-    
+
     const data = {
       news: allNews,
       featured: featured,
@@ -284,10 +285,10 @@ async function applyAISummaries(news, cache) {
         hour: '2-digit', minute: '2-digit'
       }),
     };
-    
+
     fs.mkdirSync('public', { recursive: true });
     fs.writeFileSync('public/data.json', JSON.stringify(data, null, 2), 'utf8');
-    
+
     console.log(`\n━━━ 완료 ━━━`);
     console.log(`📰 뉴스: ${data.news.length}건`);
     console.log(`⭐ 필수: ${data.featured.length}건`);
