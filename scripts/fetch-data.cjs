@@ -12,13 +12,21 @@ const SHEET_ID = process.env.SHEET_ID || '1Td8b1PEOLYdaMfNqRcOUu1S0n0-G36sSX85WT
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const CACHE_PATH = path.join('scripts', 'ai-cache.json');
 const FIRST_SEEN_CACHE_PATH = path.join('scripts', 'first-seen-cache.json');
-const WEEKLY_CACHE_PATH = path.join('scripts', 'weekly-insight-cache.json');
+const HISTORY_PATH = path.join('scripts', 'weekly-insight-history.json');
 const MAX_NEW_SUMMARIES_PER_RUN = 80; // 1회 실행 시 최대 신규 요약 개수 (rate limit 보호)
+const MAX_HISTORY_WEEKS = 8; // 발굴주제 아카이브 보관 주 수
 
 // 증시/주가 관련 키워드 (제목에 들어있으면 자사·경쟁사 카테고리에서 제외)
 const STOCK_BLACKLIST = ['주가', '코스피', '코스닥', '시가총액', '거래량', '매도세', '매수세', '증시', '상한가', '하한가', '52주 신고가', '52주 신저가', '종가', '시초가', '공매도'];
 
 const CAT_LABEL = { policy: '정책', competitor: '경쟁사', customer: '고객사', own: '자사' };
+
+const COMPETITOR_SUBS = [
+  { id: 'lges', label: 'LGES' },
+  { id: 'catl', label: 'CATL' },
+  { id: 'ampace', label: 'AMPACE' },
+  { id: 'eve', label: 'EVE' },
+];
 
 // ━━━━━━━━━━━━━━━━ 구글 시트 읽기 ━━━━━━━━━━━━━━━━
 
@@ -426,22 +434,102 @@ async function generateWeeklyInsight(pool, weekStart) {
   throw lastError;
 }
 
+// ━━━━━━━━━━━━━━━━ 경쟁사 동향 요약 ━━━━━━━━━━━━━━━━
+// 경쟁사(LGES/CATL/AMPACE/EVE)별로 최근 기사를 모아 1~2문장 동향을 생성한다.
+// AMPACE·EVE처럼 중국 회사라 국내 뉴스가 거의 없는 경우도 있으므로,
+// 기사가 없는 회사는 AI를 호출하지 않고 "최근 특별한 동향 없음"으로 처리한다.
+
+function buildCompetitorPrompt(groups) {
+  const sections = Object.entries(groups)
+    .map(([subId, articles]) => {
+      const label = COMPETITOR_SUBS.find(c => c.id === subId)?.label || subId;
+      const lines = articles
+        .slice(0, 8)
+        .map((a, i) => `  ${i + 1}. ${a.title} — ${(a.summary || '').slice(0, 60)}`)
+        .join('\n');
+      return `[${label}]\n${lines}`;
+    })
+    .join('\n\n');
+
+  const keys = Object.keys(groups).join(', ');
+
+  return `당신은 배터리 산업 전문 애널리스트입니다. 아래는 경쟁사별 최근 뉴스 목록입니다.
+
+각 회사별로 이번 주 동향을 1~2문장으로 요약해주세요. 여러 기사를 관통하는 핵심만 짚고, 없는 내용을 지어내지 마세요.
+
+반드시 아래 JSON 형식으로만 답변하세요 (키는 ${keys} 만 사용). 다른 설명이나 마크다운 코드블록 없이 순수 JSON 텍스트만 출력하세요.
+
+{ ${Object.keys(groups).map(k => `"${k}": "string"`).join(', ')} }
+
+${sections}`;
+}
+
+async function generateCompetitorSummaries(allNews) {
+  const groups = {};
+  for (const c of COMPETITOR_SUBS) {
+    const articles = allNews.filter(a => a.cat === 'competitor' && a.sub === c.id);
+    if (articles.length > 0) groups[c.id] = articles;
+  }
+
+  const result = {};
+  for (const c of COMPETITOR_SUBS) {
+    result[c.id] = { label: c.label, summary: null, articleCount: (groups[c.id] || []).length };
+  }
+
+  if (Object.keys(groups).length === 0) {
+    return COMPETITOR_SUBS.map(c => ({ sub: c.id, label: c.label, summary: '최근 특별한 동향이 확인되지 않았습니다.', articleCount: 0 }));
+  }
+
+  if (!GEMINI_API_KEY) {
+    return COMPETITOR_SUBS.map(c => ({
+      sub: c.id,
+      label: c.label,
+      summary: result[c.id].articleCount > 0 ? null : '최근 특별한 동향이 확인되지 않았습니다.',
+      articleCount: result[c.id].articleCount,
+    }));
+  }
+
+  try {
+    const prompt = buildCompetitorPrompt(groups);
+    const aiResult = await callGeminiJSON(prompt, { temperature: 0.3, maxOutputTokens: 800 });
+    for (const subId of Object.keys(groups)) {
+      if (typeof aiResult[subId] === 'string' && aiResult[subId].trim()) {
+        result[subId].summary = aiResult[subId].trim();
+      }
+    }
+  } catch (e) {
+    console.warn(`  ✗ 경쟁사 동향 생성 실패: ${e.message}`);
+  }
+
+  return COMPETITOR_SUBS.map(c => ({
+    sub: c.id,
+    label: c.label,
+    summary: result[c.id].summary || (result[c.id].articleCount > 0
+      ? `최근 관련 기사 ${result[c.id].articleCount}건 있음 (요약 생성 실패)`
+      : '최근 특별한 동향이 확인되지 않았습니다.'),
+    articleCount: result[c.id].articleCount,
+  }));
+}
+
+// ━━━━━━━━━━━━━━━━ 발굴주제 아카이브(최근 8주) ━━━━━━━━━━━━━━━━
+
 async function buildWeeklyInsight(allNews, firstSeenCache) {
   const today = todayKST();
   const weekStart = mondayOf(today);
   const prevWeekStart = mondayOf(addDaysToDateString(weekStart, -7));
 
-  const existing = loadJsonCache(WEEKLY_CACHE_PATH, null);
+  const history = loadJsonCache(HISTORY_PATH, []);
+  const latest = history[0] || null;
 
   // 이번 주 것이 이미 있으면 그대로 재사용 (주 1회만 생성)
-  if (existing && existing.weekStart === weekStart) {
+  if (latest && latest.weekStart === weekStart) {
     console.log(`\n📌 주간 인사이트: 이번 주(${weekStart}) 캐시 재사용`);
-    return existing;
+    return history;
   }
 
   if (!GEMINI_API_KEY) {
     console.warn('\n⚠ GEMINI_API_KEY 없음. 주간 인사이트는 이전 캐시를 유지합니다.');
-    return existing || null;
+    return history;
   }
 
   // 이번 주(월요일 이후) 처음 등장한 기사만 추림
@@ -455,7 +543,7 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
 
   if (pool.length < 3) {
     console.warn(`\n⚠ 주간 인사이트: 분석할 기사가 부족함(${pool.length}건). 이전 캐시 유지.`);
-    return existing || null;
+    return history;
   }
 
   try {
@@ -463,12 +551,18 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
     // 직전 기사 요약 루프의 Gemini 호출 rate limit 여유를 두기 위해 잠시 대기
     await sleep(6000);
     const insight = await generateWeeklyInsight(pool, weekStart);
-    saveJsonCache(WEEKLY_CACHE_PATH, insight);
+
+    console.log('🏢 경쟁사 동향 생성 중...');
+    await sleep(4000);
+    insight.competitors = await generateCompetitorSummaries(allNews);
+
+    const newHistory = [insight, ...history].slice(0, MAX_HISTORY_WEEKS);
+    saveJsonCache(HISTORY_PATH, newHistory);
     console.log(`✓ 주간 인사이트 생성 완료: 키워드 ${insight.keywords.length}개, 이슈 ${insight.issues.length}개, 발굴주제 ${insight.topics.length}개`);
-    return insight;
+    return newHistory;
   } catch (e) {
     console.warn(`⚠ 주간 인사이트 생성 실패: ${e.message} - 이전 캐시 유지`);
-    return existing || null;
+    return history;
   }
 }
 
@@ -503,15 +597,17 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
     saveJsonCache(FIRST_SEEN_CACHE_PATH, firstSeenCache);
     console.log(`\n📅 오늘(${today}) 처음 발견된 기사: ${newlySeenCount}건`);
 
-    // 주간 인사이트 (키워드/주요이슈/기획그룹 발굴주제) - 주 1회만 새로 생성
-    const weeklyInsight = await buildWeeklyInsight(allNews, firstSeenCache);
+    // 주간 인사이트 아카이브 (키워드/주요이슈/기획그룹 발굴주제/경쟁사 동향) - 주 1회만 새로 생성, 최근 8주 보관
+    const weeklyInsightHistory = await buildWeeklyInsight(allNews, firstSeenCache);
+    const weeklyInsight = weeklyInsightHistory[0] || null;
 
     const featured = allNews.filter(n => n.featured).slice(0, 4);
 
     const data = {
       news: allNews,
       featured: featured,
-      weeklyInsight: weeklyInsight || null,
+      weeklyInsight: weeklyInsight,
+      weeklyInsightHistory: weeklyInsightHistory,
       lastUpdated: new Date().toLocaleString('ko-KR', {
         timeZone: 'Asia/Seoul',
         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -525,7 +621,7 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
     console.log(`\n━━━ 완료 ━━━`);
     console.log(`📰 뉴스: ${data.news.length}건`);
     console.log(`⭐ 필수: ${data.featured.length}건`);
-    console.log(`🧠 주간 인사이트: ${weeklyInsight ? '있음 (' + weeklyInsight.weekStart + ')' : '없음'}`);
+    console.log(`🧠 주간 인사이트: ${weeklyInsight ? '있음 (' + weeklyInsight.weekStart + ')' : '없음'} · 아카이브 ${weeklyInsightHistory.length}주`);
     console.log(`📁 저장: public/data.json`);
   } catch (e) {
     console.error('❌ Error:', e);
