@@ -372,8 +372,8 @@ function updateFirstSeenCache(news, today, firstSeenCache) {
 
 function buildWeeklyInsightPrompt(articles) {
   const listText = articles
-    .slice(0, 150)
-    .map((a, i) => `${i + 1}. [${CAT_LABEL[a.cat] || a.cat}] ${a.title} — ${(a.summary || '').slice(0, 80)}`)
+    .slice(0, 60)
+    .map((a, i) => `${i + 1}. [${CAT_LABEL[a.cat] || a.cat}] ${a.title} — ${(a.summary || '').slice(0, 60)}`)
     .join('\n');
 
   return `당신은 배터리 산업 전문 애널리스트입니다. 아래는 최근 1주일 내 새로 수집된 배터리 산업 관련 뉴스 목록입니다 (카테고리: 정책, 경쟁사, 고객사, 자사).
@@ -398,19 +398,32 @@ ${listText}`;
 
 async function generateWeeklyInsight(pool, weekStart) {
   const prompt = buildWeeklyInsightPrompt(pool);
-  const result = await callGeminiJSON(prompt);
-  if (!Array.isArray(result.keywords) || !Array.isArray(result.issues) || !Array.isArray(result.topics)) {
-    throw new Error('응답 형식이 예상과 다름 (keywords/issues/topics 배열 필요)');
+
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const result = await callGeminiJSON(prompt);
+      if (!Array.isArray(result.keywords) || !Array.isArray(result.issues) || !Array.isArray(result.topics)) {
+        throw new Error('응답 형식이 예상과 다름 (keywords/issues/topics 배열 필요)');
+      }
+      return {
+        weekStart,
+        weekRange: formatWeekRangeKR(weekStart),
+        generatedAt: new Date().toISOString(),
+        articleCount: pool.length,
+        keywords: result.keywords,
+        issues: result.issues,
+        topics: result.topics,
+      };
+    } catch (e) {
+      lastError = e;
+      console.warn(`  ✗ 주간 인사이트 시도 ${attempt}/3 실패: ${e.message}`);
+      if (attempt < 3) {
+        await sleep(8000 * attempt);
+      }
+    }
   }
-  return {
-    weekStart,
-    weekRange: formatWeekRangeKR(weekStart),
-    generatedAt: new Date().toISOString(),
-    articleCount: pool.length,
-    keywords: result.keywords,
-    issues: result.issues,
-    topics: result.topics,
-  };
+  throw lastError;
 }
 
 async function buildWeeklyInsight(allNews, firstSeenCache) {
@@ -447,6 +460,8 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
 
   try {
     console.log(`\n🧠 주간 인사이트 생성 중... (분석 대상 ${pool.length}건)`);
+    // 직전 기사 요약 루프의 Gemini 호출 rate limit 여유를 두기 위해 잠시 대기
+    await sleep(6000);
     const insight = await generateWeeklyInsight(pool, weekStart);
     saveJsonCache(WEEKLY_CACHE_PATH, insight);
     console.log(`✓ 주간 인사이트 생성 완료: 키워드 ${insight.keywords.length}개, 이슈 ${insight.issues.length}개, 발굴주제 ${insight.topics.length}개`);
