@@ -411,6 +411,7 @@ function buildWeeklyInsightPrompt(articles) {
    - summary: 2~3문장 요약
    - impact: 삼성SDI 소형전지 사업 관점에서의 영향도 1~5 사이 정수 (5가 가장 큼)
    - owner: 이 이슈를 담당해서 살펴봐야 할 팀. 반드시 다음 목록 중 하나만 사용: ${teamListText}
+     배정 기준: 여러 팀에 걸쳐 있거나 사업 방향에 대한 의사결정이 필요한 전략적 이슈는 "기획그룹"을 담당으로 지정하세요. 원가·구매조건처럼 구매팀의 실무 협상만으로 해결되는 좁은 실무 이슈일 때만 "구매팀"을, 특정 기술·양산·품질 실무에 국한된 이슈일 때만 "개발실"/"제조기술센터"/"기술팀"을 지정하세요. 단순히 원자재·가격 관련 키워드가 있다고 기계적으로 구매팀을 배정하지 말고, 이슈의 성격(전략적 판단 필요 여부)을 기준으로 판단하세요.
    - sdiImpact: 이 이슈가 삼성SDI에 구체적으로 어떤 영향을 미치는지 한 문장
    - actionPlan: 담당 조직이 취해야 할 추진방안 1~2문장
    - meetingCandidate: 다음 임원회의 안건으로 올릴 만큼 중요한지 true/false
@@ -559,10 +560,15 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
   const history = loadJsonCache(HISTORY_PATH, []);
   const latest = history[0] || null;
 
-  // 이번 주 것이 이미 있으면 그대로 재사용 (주 1회만 생성)
-  if (latest && latest.weekStart === weekStart) {
+  // 이번 주 것이 이미 있고, 최신 스키마(summary/reportCandidates 포함)로 생성된 것이면 그대로 재사용 (주 1회만 생성)
+  // 스키마가 바뀐 뒤 남아있는 예전 캐시는 여기서 걸러져서 자동으로 다시 생성된다.
+  const hasCurrentSchema = latest && typeof latest.summary === 'string' && Array.isArray(latest.reportCandidates);
+  if (latest && latest.weekStart === weekStart && hasCurrentSchema) {
     console.log(`\n📌 주간 인사이트: 이번 주(${weekStart}) 캐시 재사용`);
     return history;
+  }
+  if (latest && latest.weekStart === weekStart && !hasCurrentSchema) {
+    console.log(`\n🔄 주간 인사이트: 이번 주(${weekStart}) 캐시가 예전 스키마라 새로 생성합니다.`);
   }
 
   if (!GEMINI_API_KEY) {
