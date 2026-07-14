@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target } from 'lucide-react';
+import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target, History } from 'lucide-react';
 
 // 카테고리 정의 (기존과 동일)
 const CATEGORIES = [
@@ -38,26 +38,21 @@ const SUB_LABEL = {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ⬇️  여기를 직접 수정하세요! 소형 기획그룹 고민거리 목록
-// ⬇️  항목 추가/삭제도 자유롭게 가능합니다 (쉼표로 구분)
-// ⬇️  편집 후 Commit changes 하면 사이트에 바로 반영됩니다
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const PLANNING_DISCUSSIONS = [
-  '여기에 첫 번째 고민거리를 작성하세요',
-  '여기에 두 번째 고민거리를 작성하세요',
-  '여기에 세 번째 고민거리를 작성하세요',
-];
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ⬇️  AI가 아직 이번 주 분석을 만들지 못했을 때 임시로 보여줄 샘플입니다.
 // ⬇️  실제 데이터(data.json의 weeklyInsight)가 생기면 자동으로 이 샘플 대신 그걸 보여줍니다.
 // ⬇️  내용을 자유롭게 고쳐서 원하는 시안으로 만들 수 있습니다.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const SAMPLE_WEEKLY_INSIGHT = {
   isSample: true,
+  weekStart: '2026-07-07',
   weekRange: '7/7 ~ 7/13',
   articleCount: 132,
+  competitors: [
+    { sub: 'lges', label: 'LGES', summary: 'AI데이터센터發 ESS 성장 기대에 강세, 리비안向 46시리즈 공급 확대', articleCount: 6 },
+    { sub: 'catl', label: 'CATL', summary: 'FEOC 우회 위해 美 라이선스 방식 진출 지속, 유럽 현지생산 확대', articleCount: 4 },
+    { sub: 'ampace', label: 'AMPACE', summary: '최근 특별한 동향이 확인되지 않았습니다.', articleCount: 0 },
+    { sub: 'eve', label: 'EVE', summary: '최근 특별한 동향이 확인되지 않았습니다.', articleCount: 0 },
+  ],
   keywords: [
     { keyword: 'FEOC 규제', count: 14, note: '해외우려기업 규정 강화' },
     { keyword: 'ESS 성장', count: 11, note: 'AI 데이터센터발 수요' },
@@ -102,10 +97,31 @@ const SAMPLE_WEEKLY_INSIGHT = {
   ],
 };
 
+// 아카이브 화면 샘플 (최신 주 + 지난 주 몇 개) - 실제 데이터가 생기면 자동으로 대체됨
+const SAMPLE_WEEKLY_HISTORY = [
+  SAMPLE_WEEKLY_INSIGHT,
+  {
+    weekStart: '2026-06-30',
+    weekRange: '6/30 ~ 7/6',
+    topics: [
+      { title: '비중국 LFP 공급망 파트너십 검토' },
+      { title: '전동공구向 ESS 파생 수요 검토' },
+    ],
+  },
+  {
+    weekStart: '2026-06-23',
+    weekRange: '6/23 ~ 6/29',
+    topics: [
+      { title: '인터배터리 후속 고객사 미팅 제안' },
+    ],
+  },
+];
+
 export default function App() {
   const [news, setNews] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [weeklyInsight, setWeeklyInsight] = useState(null);
+  const [weeklyInsightHistory, setWeeklyInsightHistory] = useState(null);
   const [lastUpdated, setLastUpdated] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -123,6 +139,11 @@ export default function App() {
       setNews(data.news || []);
       setFeatured(data.featured || []);
       setWeeklyInsight(data.weeklyInsight || SAMPLE_WEEKLY_INSIGHT);
+      setWeeklyInsightHistory(
+        data.weeklyInsightHistory && data.weeklyInsightHistory.length > 0
+          ? data.weeklyInsightHistory
+          : SAMPLE_WEEKLY_HISTORY
+      );
       setLastUpdated(data.lastUpdated || '');
     } catch (e) {
       console.error(e);
@@ -215,6 +236,7 @@ export default function App() {
                   news={news}
                   onCatClick={handleCatClick}
                   weeklyInsight={weeklyInsight}
+                  weeklyInsightHistory={weeklyInsightHistory}
                 />
               )}
             </>
@@ -348,31 +370,6 @@ function ConcernsBanner({ featured }) {
   );
 }
 
-// ━━━━━━━━━━ 소형 기획그룹 고민해봅시다 ━━━━━━━━━━
-function PlanningDiscussions() {
-  return (
-    <div className="bb-planning">
-      <div className="bb-planning-header">
-        <div className="bb-planning-icon">
-          <Lightbulb size={22} color="#E89611" strokeWidth={2.2} fill="#FFE082" />
-        </div>
-        <div>
-          <div className="bb-planning-title">소형 기획그룹 고민해봅시다 💭</div>
-          <div className="bb-planning-desc">함께 논의해야 할 안건들</div>
-        </div>
-      </div>
-      <div className="bb-planning-list">
-        {PLANNING_DISCUSSIONS.map((item, idx) => (
-          <div key={idx} className="bb-planning-item">
-            <div className="bb-planning-num">{idx + 1}</div>
-            <div className="bb-planning-text">{item}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ━━━━━━━━━━ 이번 주 배터리 산업 브리핑 (AI 자동 생성) ━━━━━━━━━━
 function WeeklyInsight({ data }) {
   if (!data || (!data.keywords?.length && !data.issues?.length && !data.topics?.length)) {
@@ -453,13 +450,76 @@ function WeeklyInsight({ data }) {
   );
 }
 
+// ━━━━━━━━━━ 경쟁사 동향 비교 ━━━━━━━━━━
+function CompetitorCompare({ competitors }) {
+  if (!competitors || competitors.length === 0) return null;
+
+  return (
+    <div className="bb-compare">
+      <div className="bb-compare-title"><Swords size={15} /> 경쟁사 동향 비교</div>
+      <div className="bb-compare-grid">
+        {competitors.map((c) => (
+          <div className="bb-compare-card" key={c.sub}>
+            <div className="bb-compare-card-label">{c.label}</div>
+            <div className="bb-compare-card-summary">{c.summary}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ 지난 발굴주제 아카이브 ━━━━━━━━━━
+function tokenizeTopic(str) {
+  return (str || '')
+    .replace(/[·,()~/·\-–]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 2);
+}
+
+function topicsOverlap(titleA, titleB) {
+  const setA = new Set(tokenizeTopic(titleA));
+  return tokenizeTopic(titleB).some(w => setA.has(w));
+}
+
+function TopicArchive({ history }) {
+  if (!history || history.length <= 1) return null;
+
+  const rows = [];
+  history.forEach((week, weekIdx) => {
+    if (weekIdx === 0) return; // 이번 주는 위에서 이미 보여줬으니 제외
+    (week.topics || []).forEach((topic, topicIdx) => {
+      const moreRecentWeeks = history.slice(0, weekIdx);
+      const recurring = moreRecentWeeks.some(w => (w.topics || []).some(t => topicsOverlap(t.title, topic.title)));
+      rows.push({ key: `${weekIdx}-${topicIdx}`, weekRange: week.weekRange, title: topic.title, recurring });
+    });
+  });
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="bb-archive">
+      <div className="bb-archive-title"><History size={15} /> 지난 발굴주제 아카이브</div>
+      <div className="bb-archive-list">
+        {rows.map(row => (
+          <div className="bb-archive-row" key={row.key}>
+            <span className="bb-archive-week">{row.weekRange}</span>
+            <span className="bb-archive-topic">{row.title}</span>
+            {row.recurring && <span className="bb-archive-badge">재등장</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ━━━━━━━━━━ Home View ━━━━━━━━━━
-function HomeView({ news, onCatClick, weeklyInsight }) {
+function HomeView({ news, onCatClick, weeklyInsight, weeklyInsightHistory }) {
   return (
     <>
-      <PlanningDiscussions />
-
       <WeeklyInsight data={weeklyInsight} />
+      <CompetitorCompare competitors={weeklyInsight?.competitors} />
+      <TopicArchive history={weeklyInsightHistory} />
 
       <div className="bb-cat-grid">
         {CATEGORIES.map(cat => {
@@ -943,6 +1003,67 @@ const globalStyles = `
   .bb-topic-desc { font-size: 13.5px; color: #4A4470; line-height: 1.6; margin-bottom: 6px; }
   .bb-topic-rationale { font-size: 12.5px; color: #6B63B0; }
 
+  /* ━━━ 경쟁사 동향 비교 ━━━ */
+  .bb-compare {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+  }
+  .bb-compare-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 14px;
+  }
+  .bb-compare-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .bb-compare-card { border: 1px solid var(--line-light); border-radius: 8px; padding: 12px 14px; }
+  .bb-compare-card-label { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 5px; }
+  .bb-compare-card-summary { font-size: 12.5px; color: var(--ink-mute); line-height: 1.55; }
+
+  /* ━━━ 지난 발굴주제 아카이브 ━━━ */
+  .bb-archive {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+  }
+  .bb-archive-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .bb-archive-list { display: flex; flex-direction: column; }
+  .bb-archive-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line-light);
+    font-size: 13px;
+  }
+  .bb-archive-row:last-child { border-bottom: none; }
+  .bb-archive-week { color: var(--ink-faint); flex-shrink: 0; min-width: 76px; }
+  .bb-archive-topic { color: var(--ink); flex: 1; }
+  .bb-archive-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
   /* ━━━ Hero Banner (Main Slogan) ━━━ */
   .bb-hero {
     background: linear-gradient(135deg, #FFFFFF 0%, #F0F7FB 100%);
@@ -1106,5 +1227,6 @@ const globalStyles = `
     .bb-topnav { padding: 0 16px; gap: 16px; }
     .bb-logo-badge { display: none; }
     .bb-cat-grid { grid-template-columns: 1fr; }
+    .bb-compare-grid { grid-template-columns: 1fr; }
   }
 `;
