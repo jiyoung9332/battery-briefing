@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target, History, Award, Landmark } from 'lucide-react';
+import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target, History, Award, Landmark, Download } from 'lucide-react';
+import { generateReportPptx, generateReportDocx } from './report-builder';
 
 // 카테고리 정의 (기존과 동일)
 const CATEGORIES = [
@@ -47,6 +48,8 @@ const SAMPLE_WEEKLY_INSIGHT = {
   weekStart: '2026-07-07',
   weekRange: '7/7 ~ 7/13',
   articleCount: 132,
+  summary: '이번 주는 중국 LFP 증설과 리튬 가격 급락이 원가 경쟁 구도를 흔들었고, 美 FEOC 규제 강화로 비중국 공급망의 반사이익 기대가 커졌다. ESS·AI데이터센터發 수요가 새로운 성장축으로 부상하는 흐름도 뚜렷했다.',
+  overallResponse: '단기적으로는 리튬 가격 급락에 따른 구매 전략 재점검이 시급하고, 중장기적으로는 비중국 공급망 파트너십과 ESS 파생 수요 대응 체계를 함께 준비해야 한다.',
   competitors: [
     { sub: 'lges', label: 'LGES', summary: 'AI데이터센터發 ESS 성장 기대에 강세, 리비안向 46시리즈 공급 확대', articleCount: 6 },
     { sub: 'catl', label: 'CATL', summary: 'FEOC 우회 위해 美 라이선스 방식 진출 지속, 유럽 현지생산 확대', articleCount: 4 },
@@ -63,20 +66,59 @@ const SAMPLE_WEEKLY_INSIGHT = {
   ],
   issues: [
     {
+      title: '중국 LFP 증설 영향',
+      summary: '중국 배터리사들의 LFP 라인 증설이 이어지며 글로벌 공급 과잉 우려가 커지고 있다.',
+      impact: 5,
+      owner: '구매팀',
+      sdiImpact: '소형전지 원가 경쟁력에 직접적인 압박 요인으로 작용할 수 있다.',
+      actionPlan: '중국산 LFP 원가 동향을 분기별로 추적하고, 비중국 소재 파트너십 대안을 병행 검토한다.',
+      meetingCandidate: true,
+      shareTargets: ['전략마케팅실', '기술팀'],
+    },
+    {
+      title: '리튬 가격 급락 영향',
+      summary: '리튬 원자재 가격이 최근 급락하며 셀 원가 구조에 변화가 생기고 있다.',
+      impact: 3,
+      owner: '구매팀',
+      sdiImpact: '단기 원가 절감 기회이나, 장기 계약 단가 재협상 이슈가 발생할 수 있다.',
+      actionPlan: '주요 원료 장기계약 단가를 재점검하고 현물가 연동 조항 여부를 확인한다.',
+      meetingCandidate: false,
+      shareTargets: ['기획그룹'],
+    },
+    {
       title: '美 FEOC 규제 강화, 북미 ESS向 비중국 LFP 공급 부족 우려',
       summary: '해외우려기업(FEOC) 규정이 확대되며 북미 ESS 시장에서 비중국산 LFP 공급이 빠듯해질 전망이다.',
-      why: '비중국 공급망을 갖춘 국내 업체에는 기회 요인.',
+      impact: 4,
+      owner: '전략마케팅실',
+      sdiImpact: '비중국 공급망을 갖춘 국내 업체에는 기회 요인으로 작용할 수 있다.',
+      actionPlan: '북미 ESS向 비중국 LFP 공급 레퍼런스를 확보하고 고객사 대상 제안을 준비한다.',
+      meetingCandidate: true,
+      shareTargets: ['기획그룹', '기술팀'],
     },
     {
       title: '전기차 수요 둔화 속 ESS·AI데이터센터가 배터리 새 성장축으로',
-      summary: '완성차 EV 수요는 정체됐지만 AI 데이터센터발 전력 수요가 ESS 시장을 밀어올리고 있다.',
-      why: '중장기 포트폴리오 재편의 핵심 변수.',
+      summary: '완성차 EV 수요는 정체됐지만 AI 데이터센터發 전력 수요가 ESS 시장을 밀어올리고 있다.',
+      impact: 4,
+      owner: '기획그룹',
+      sdiImpact: '중장기 포트폴리오 재편의 핵심 변수가 될 수 있다.',
+      actionPlan: 'ESS·AI데이터센터向 소형전지 파생 수요 시나리오를 정리해 사업부에 공유한다.',
+      meetingCandidate: false,
+      shareTargets: ['개발실'],
     },
     {
       title: '배터리 여권·CBAM 등 EU 탄소규제, 공급망 탄소데이터 대응 필수화',
       summary: '디지털배터리여권과 탄소국경조정제도 시행이 임박하며 원료 이력 관리 요구가 커지고 있다.',
-      why: 'EU향 출하 비중이 있는 기업은 선제 대응 필요.',
+      impact: 3,
+      owner: '지원팀',
+      sdiImpact: 'EU向 출하 비중이 있는 만큼 선제 대응이 필요하다.',
+      actionPlan: '원료 추적성 데이터 체계 구축 현황을 점검하고 대응 일정을 수립한다.',
+      meetingCandidate: false,
+      shareTargets: ['제조기술센터'],
     },
+  ],
+  reportCandidates: [
+    { title: '중국 LFP 증설이 소형전지 원가 경쟁력에 미치는 영향', targetAudience: '사업부장', reason: '원가 경쟁력 이슈로 사업 전략 차원의 의사결정이 필요함' },
+    { title: '북미 ESS向 비중국 LFP 공급 기회 대응 방안', targetAudience: '지원팀장', reason: '고객 대응 실무 준비가 시급한 사안' },
   ],
   topics: [
     {
@@ -125,20 +167,20 @@ const SAMPLE_DART_FILINGS = {
   isSample: true,
   companies: [
     {
-      id: 'sdi', label: '삼성SDI',
+      id: 'sdi', label: '삼성SDI', type: 'battery',
       filings: [
         { title: '분기보고서 (2026.1분기)', date: '20260514', link: '#' },
         { title: '주요사항보고서(자기주식취득결정)', date: '20260508', link: '#' },
       ],
     },
     {
-      id: 'lges', label: 'LG에너지솔루션',
+      id: 'lges', label: 'LG에너지솔루션', type: 'battery',
       filings: [
         { title: '분기보고서 (2026.1분기)', date: '20260515', link: '#' },
       ],
     },
     {
-      id: 'hyundai', label: '현대자동차',
+      id: 'hyundai', label: '현대자동차', type: 'customer',
       filings: [
         { title: '주요사항보고서(투자판단관련주요경영사항)', date: '20260510', link: '#' },
       ],
@@ -263,17 +305,18 @@ export default function App() {
         activeView={activeView}
         onMainClick={goHome}
         onBriefingClick={goBriefing}
-        onFilingsClick={goFilings}
       />
 
       <div className="bb-layout">
         <Sidebar
           activeCat={activeCat}
           activeSub={activeSub}
+          activeView={activeView}
           news={news}
           onCatClick={handleCatClick}
           onSubClick={handleSubClick}
           onHomeClick={goHome}
+          onFilingsClick={goFilings}
         />
 
         <main className="bb-content">
@@ -288,6 +331,7 @@ export default function App() {
                 <BriefingView
                   weeklyInsight={weeklyInsight}
                   weeklyInsightHistory={weeklyInsightHistory}
+                  news={news}
                 />
               ) : activeView === 'filings' ? (
                 <FilingsView dartFilings={dartFilings} />
@@ -316,7 +360,7 @@ export default function App() {
 }
 
 // ━━━━━━━━━━ Top Navigation ━━━━━━━━━━
-function TopNav({ lastUpdated, totalCount, onLogoClick, activeView, onMainClick, onBriefingClick, onFilingsClick }) {
+function TopNav({ lastUpdated, totalCount, onLogoClick, activeView, onMainClick, onBriefingClick }) {
   return (
     <header className="bb-topnav">
       <div className="bb-logo" onClick={onLogoClick}>
@@ -327,7 +371,6 @@ function TopNav({ lastUpdated, totalCount, onLogoClick, activeView, onMainClick,
       <nav className="bb-top-menu">
         <a className={activeView === 'home' ? 'active' : ''} onClick={onMainClick}>메인</a>
         <a className={activeView === 'briefing' ? 'active' : ''} onClick={onBriefingClick}>주간 브리핑</a>
-        <a className={activeView === 'filings' ? 'active' : ''} onClick={onFilingsClick}>특허·공시</a>
       </nav>
       <div className="bb-top-right">
         {lastUpdated && <span className="bb-last-update">업데이트 · {lastUpdated}</span>}
@@ -338,7 +381,7 @@ function TopNav({ lastUpdated, totalCount, onLogoClick, activeView, onMainClick,
 }
 
 // ━━━━━━━━━━ Sidebar ━━━━━━━━━━
-function Sidebar({ activeCat, activeSub, news, onCatClick, onSubClick, onHomeClick }) {
+function Sidebar({ activeCat, activeSub, activeView, news, onCatClick, onSubClick, onHomeClick, onFilingsClick }) {
   return (
     <aside className="bb-sidebar">
       <div className="bb-sidebar-header">
@@ -349,7 +392,7 @@ function Sidebar({ activeCat, activeSub, news, onCatClick, onSubClick, onHomeCli
       <div className="bb-menu-list">
         {/* Home */}
         <div
-          className={`bb-menu-item ${!activeCat ? 'active' : ''}`}
+          className={`bb-menu-item ${activeView !== 'filings' && !activeCat ? 'active' : ''}`}
           onClick={onHomeClick}
         >
           <Home size={17} style={{ marginRight: 10, verticalAlign: -3 }} />
@@ -392,6 +435,15 @@ function Sidebar({ activeCat, activeSub, news, onCatClick, onSubClick, onHomeCli
             </React.Fragment>
           );
         })}
+
+        {/* 특허·공시 */}
+        <div
+          className={`bb-menu-item ${activeView === 'filings' ? 'active' : ''}`}
+          onClick={onFilingsClick}
+        >
+          <Landmark size={17} style={{ marginRight: 10, verticalAlign: -3 }} />
+          특허·공시
+        </div>
       </div>
     </aside>
   );
@@ -441,12 +493,101 @@ function ConcernsBanner({ featured }) {
 }
 
 // ━━━━━━━━━━ 이번 주 배터리 산업 브리핑 (AI 자동 생성) ━━━━━━━━━━
+function KeywordHeatmap({ keywords }) {
+  if (!keywords || keywords.length === 0) return null;
+  const maxCount = Math.max(...keywords.map(k => (typeof k.count === 'number' ? k.count : 0)), 1);
+
+  return (
+    <div className="bb-heatmap">
+      {keywords.map((k, idx) => {
+        const ratio = typeof k.count === 'number' ? k.count / maxCount : 0.3;
+        return (
+          <div
+            className="bb-heatmap-tile"
+            key={idx}
+            title={k.note || ''}
+            style={{ background: `rgba(91, 79, 224, ${0.12 + ratio * 0.68})`, color: ratio > 0.55 ? '#fff' : 'var(--insight)' }}
+          >
+            <span className="bb-heatmap-keyword">{k.keyword}</span>
+            {typeof k.count === 'number' && <span className="bb-heatmap-count">{k.count}</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function IssueCard({ issue, idx }) {
+  const impact = typeof issue.impact === 'number' ? Math.min(5, Math.max(0, issue.impact)) : 0;
+
+  return (
+    <div className="bb-issue-card">
+      <div className="bb-issue-card-head">
+        <div className="bb-issue-num">{idx + 1}</div>
+        <div className="bb-issue-card-title-area">
+          <div className="bb-issue-title">{issue.title}</div>
+          <div className="bb-issue-badges">
+            {impact > 0 && (
+              <span className="bb-issue-impact" title={`영향도 ${impact}/5`}>
+                {[1, 2, 3, 4, 5].map(n => (
+                  <Star key={n} size={12} fill={n <= impact ? '#5B4FE0' : 'none'} color="#5B4FE0" strokeWidth={1.8} />
+                ))}
+              </span>
+            )}
+            {issue.owner && <span className="bb-issue-owner">담당 · {issue.owner}</span>}
+            {issue.meetingCandidate && <span className="bb-issue-meeting">임원회의 안건 후보</span>}
+          </div>
+        </div>
+      </div>
+
+      {issue.summary && <div className="bb-issue-summary">{issue.summary}</div>}
+      {issue.sdiImpact && (
+        <div className="bb-issue-sdi-impact"><strong>SDI 영향</strong> · {issue.sdiImpact}</div>
+      )}
+      {issue.actionPlan && (
+        <div className="bb-issue-action"><strong>추진방안</strong> · {issue.actionPlan}</div>
+      )}
+      {issue.shareTargets && issue.shareTargets.length > 0 && (
+        <div className="bb-issue-share">
+          공유대상 ·
+          {issue.shareTargets.map((t, i) => (
+            <span className="bb-issue-share-chip" key={i}>{t}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReportCandidates({ candidates }) {
+  if (!candidates || candidates.length === 0) return null;
+  return (
+    <div className="bb-weekly-block">
+      <div className="bb-weekly-block-title"><FileText size={15} /> 보고서 후보 주제</div>
+      <div className="bb-report-candidates">
+        {candidates.map((c, idx) => (
+          <div className="bb-report-candidate" key={idx}>
+            <div className="bb-report-candidate-title">{c.title}</div>
+            <div className="bb-report-candidate-meta">
+              <span className="bb-report-candidate-audience">보고대상 · {c.targetAudience}</span>
+              {c.reason && <span className="bb-report-candidate-reason">{c.reason}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function WeeklyInsight({ data }) {
   if (!data || (!data.keywords?.length && !data.issues?.length && !data.topics?.length)) {
     return null;
   }
 
-  const { isSample, weekRange, articleCount, keywords = [], issues = [], topics = [] } = data;
+  const {
+    isSample, weekRange, articleCount, summary, overallResponse,
+    keywords = [], issues = [], topics = [], reportCandidates = [],
+  } = data;
 
   return (
     <div className="bb-weekly">
@@ -467,35 +608,32 @@ function WeeklyInsight({ data }) {
         </div>
       </div>
 
+      {summary && <div className="bb-weekly-summary">{summary}</div>}
+
       {keywords.length > 0 && (
         <div className="bb-weekly-block">
-          <div className="bb-weekly-block-title"><Hash size={15} /> 이번 주 키워드</div>
-          <div className="bb-keyword-chips">
-            {keywords.map((k, idx) => (
-              <span className="bb-keyword-chip" key={idx} title={k.note || ''}>
-                {k.keyword}
-                {typeof k.count === 'number' && <em>{k.count}</em>}
-              </span>
-            ))}
-          </div>
+          <div className="bb-weekly-block-title"><Hash size={15} /> Heat Map · 이번 주 최다 언급 키워드</div>
+          <KeywordHeatmap keywords={keywords} />
         </div>
       )}
 
       {issues.length > 0 && (
         <div className="bb-weekly-block">
-          <div className="bb-weekly-block-title"><Flame size={15} /> 주요 이슈</div>
+          <div className="bb-weekly-block-title"><Flame size={15} /> 주간 핵심이슈 TOP {issues.length}</div>
           <div className="bb-issue-list">
             {issues.map((issue, idx) => (
-              <div className="bb-issue-item" key={idx}>
-                <div className="bb-issue-num">{idx + 1}</div>
-                <div className="bb-issue-body">
-                  <div className="bb-issue-title">{issue.title}</div>
-                  {issue.summary && <div className="bb-issue-summary">{issue.summary}</div>}
-                  {issue.why && <div className="bb-issue-why">{issue.why}</div>}
-                </div>
-              </div>
+              <IssueCard issue={issue} idx={idx} key={idx} />
             ))}
           </div>
+        </div>
+      )}
+
+      <ReportCandidates candidates={reportCandidates} />
+
+      {overallResponse && (
+        <div className="bb-weekly-block">
+          <div className="bb-weekly-block-title"><Target size={15} /> 종합 대응방향</div>
+          <div className="bb-overall-response">{overallResponse}</div>
         </div>
       )}
 
@@ -584,7 +722,67 @@ function TopicArchive({ history }) {
 }
 
 // ━━━━━━━━━━ 주간 브리핑 (전용 페이지) ━━━━━━━━━━
-function BriefingView({ weeklyInsight, weeklyInsightHistory }) {
+// ━━━━━━━━━━ AI 리포트 생성 버튼 ━━━━━━━━━━
+function ReportGeneratorButton({ weeklyInsight, news }) {
+  const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState(null);
+
+  if (!weeklyInsight) return null;
+
+  const buildReportData = () => {
+    const policyNews = (news || [])
+      .filter(n => n.cat === 'policy')
+      .slice(0, 8)
+      .map(n => ({ title: n.title }));
+
+    return {
+      weekRange: weeklyInsight.weekRange,
+      summary: weeklyInsight.summary,
+      issues: weeklyInsight.issues || [],
+      competitors: weeklyInsight.competitors || [],
+      policyNews,
+      overallResponse: weeklyInsight.overallResponse,
+    };
+  };
+
+  const handleGenerate = async (format) => {
+    setOpen(false);
+    setGenerating(true);
+    setError(null);
+    try {
+      const reportData = buildReportData();
+      if (format === 'pptx') {
+        await generateReportPptx(reportData);
+      } else {
+        await generateReportDocx(reportData);
+      }
+    } catch (e) {
+      console.error(e);
+      setError('리포트 생성에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className="bb-report-btn-wrap">
+      <button className="bb-report-btn" onClick={() => setOpen(!open)} disabled={generating}>
+        <Download size={15} />
+        {generating ? '생성 중...' : 'AI 리포트 생성'}
+      </button>
+      {open && !generating && (
+        <div className="bb-report-menu">
+          <div className="bb-report-menu-item" onClick={() => handleGenerate('pptx')}>PPT로 생성</div>
+          <div className="bb-report-menu-item" onClick={() => handleGenerate('docx')}>Word로 생성</div>
+        </div>
+      )}
+      {error && <div className="bb-report-error">{error}</div>}
+    </div>
+  );
+}
+
+function BriefingView({ weeklyInsight, weeklyInsightHistory, news }) {
   return (
     <>
       <div className="bb-page-header">
@@ -602,6 +800,8 @@ function BriefingView({ weeklyInsight, weeklyInsightHistory }) {
         </div>
       </div>
 
+      <ReportGeneratorButton weeklyInsight={weeklyInsight} news={news} />
+
       <WeeklyInsight data={weeklyInsight} />
       <CompetitorCompare competitors={weeklyInsight?.competitors} />
       <TopicArchive history={weeklyInsightHistory} />
@@ -610,9 +810,37 @@ function BriefingView({ weeklyInsight, weeklyInsightHistory }) {
 }
 
 // ━━━━━━━━━━ DART 공시 목록 ━━━━━━━━━━
+function FilingsCardGrid({ companies }) {
+  return (
+    <div className="bb-filings-grid">
+      {companies.map((c) => (
+        <div className="bb-filings-card" key={c.id}>
+          <div className="bb-filings-card-label">{c.label}</div>
+          {(!c.filings || c.filings.length === 0) ? (
+            <div className="bb-filings-empty">최근 2주 내 공시 없음</div>
+          ) : (
+            <ul className="bb-filings-list">
+              {c.filings.map((item, idx) => (
+                <li key={idx}>
+                  <a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                  <span className="bb-filings-date">{item.date}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DartFilings({ data }) {
   if (!data || !data.companies || data.companies.length === 0) return null;
   const { isSample, companies } = data;
+
+  const batteryCompanies = companies.filter(c => c.type === 'battery');
+  const customerCompanies = companies.filter(c => c.type === 'customer');
+  const ungroupedCompanies = companies.filter(c => c.type !== 'battery' && c.type !== 'customer');
 
   return (
     <div className="bb-filings">
@@ -622,25 +850,22 @@ function DartFilings({ data }) {
           {isSample && <span className="bb-weekly-sample-badge">샘플</span>}
         </div>
       </div>
-      <div className="bb-filings-grid">
-        {companies.map((c) => (
-          <div className="bb-filings-card" key={c.id}>
-            <div className="bb-filings-card-label">{c.label}</div>
-            {(!c.filings || c.filings.length === 0) ? (
-              <div className="bb-filings-empty">최근 2주 내 공시 없음</div>
-            ) : (
-              <ul className="bb-filings-list">
-                {c.filings.map((item, idx) => (
-                  <li key={idx}>
-                    <a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a>
-                    <span className="bb-filings-date">{item.date}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
-      </div>
+
+      {batteryCompanies.length > 0 && (
+        <div className="bb-filings-group">
+          <div className="bb-filings-group-label">배터리회사</div>
+          <FilingsCardGrid companies={batteryCompanies} />
+        </div>
+      )}
+
+      {customerCompanies.length > 0 && (
+        <div className="bb-filings-group">
+          <div className="bb-filings-group-label">고객사</div>
+          <FilingsCardGrid companies={customerCompanies} />
+        </div>
+      )}
+
+      {ungroupedCompanies.length > 0 && <FilingsCardGrid companies={ungroupedCompanies} />}
     </div>
   );
 }
@@ -1126,8 +1351,54 @@ const globalStyles = `
     padding: 1px 7px;
     border-radius: 10px;
   }
+  .bb-weekly-summary {
+    font-size: 14px;
+    color: var(--ink-mute);
+    line-height: 1.7;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .bb-overall-response {
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.7;
+    background: var(--insight-bg);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  /* ━━━ 키워드 Heat Map ━━━ */
+  .bb-heatmap { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bb-heatmap-tile {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: default;
+    transition: transform 0.15s;
+  }
+  .bb-heatmap-tile:hover { transform: translateY(-1px); }
+  .bb-heatmap-count {
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.35);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  /* ━━━ 주간 핵심이슈 카드 ━━━ */
   .bb-issue-list { display: flex; flex-direction: column; gap: 14px; }
-  .bb-issue-item { display: flex; gap: 14px; align-items: flex-start; }
+  .bb-issue-card {
+    border: 1px solid var(--line-light);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .bb-issue-card-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
   .bb-issue-num {
     width: 24px;
     height: 24px;
@@ -1142,10 +1413,60 @@ const globalStyles = `
     font-weight: 700;
     margin-top: 1px;
   }
-  .bb-issue-body { flex: 1; min-width: 0; }
-  .bb-issue-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px; letter-spacing: -0.01em; }
-  .bb-issue-summary { font-size: 13.5px; color: var(--ink-mute); line-height: 1.6; margin-bottom: 4px; }
-  .bb-issue-why { font-size: 12.5px; color: var(--insight); font-weight: 500; }
+  .bb-issue-card-title-area { flex: 1; min-width: 0; }
+  .bb-issue-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 6px; letter-spacing: -0.01em; }
+  .bb-issue-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .bb-issue-impact { display: inline-flex; align-items: center; gap: 1px; }
+  .bb-issue-owner {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    background: var(--primary-bg);
+    padding: 2px 9px;
+    border-radius: 10px;
+  }
+  .bb-issue-meeting {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #C0392B;
+    background: #FDEDEB;
+    padding: 2px 9px;
+    border-radius: 10px;
+  }
+  .bb-issue-summary { font-size: 13.5px; color: var(--ink-mute); line-height: 1.6; margin-bottom: 8px; }
+  .bb-issue-sdi-impact, .bb-issue-action {
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+  .bb-issue-sdi-impact strong, .bb-issue-action strong { color: var(--insight); font-weight: 700; }
+  .bb-issue-share { font-size: 12px; color: var(--ink-faint); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .bb-issue-share-chip {
+    font-size: 11.5px;
+    color: var(--ink-mute);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  /* ━━━ 보고서 후보 주제 ━━━ */
+  .bb-report-candidates { display: flex; flex-direction: column; gap: 10px; }
+  .bb-report-candidate {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .bb-report-candidate-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 5px; }
+  .bb-report-candidate-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12.5px; color: var(--ink-mute); }
+  .bb-report-candidate-audience {
+    font-weight: 700;
+    color: var(--primary-dark);
+    background: var(--primary-bg);
+    padding: 2px 9px;
+    border-radius: 10px;
+  }
   .bb-topic-cards { display: flex; flex-direction: column; gap: 12px; }
   .bb-topic-card {
     display: flex;
@@ -1233,6 +1554,47 @@ const globalStyles = `
     flex-shrink: 0;
   }
 
+  /* ━━━ AI 리포트 생성 버튼 ━━━ */
+  .bb-report-btn-wrap { position: relative; display: flex; justify-content: flex-end; margin-bottom: 16px; }
+  .bb-report-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--insight);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .bb-report-btn:hover { background: #4A3FC7; }
+  .bb-report-btn:disabled { opacity: 0.7; cursor: default; }
+  .bb-report-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    z-index: 20;
+    min-width: 150px;
+  }
+  .bb-report-menu-item {
+    padding: 11px 16px;
+    font-size: 13.5px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .bb-report-menu-item:hover { background: var(--bg); }
+  .bb-report-error { position: absolute; top: calc(100% + 6px); right: 0; font-size: 12px; color: #C0392B; white-space: nowrap; }
+
   /* ━━━ DART 공시 ━━━ */
   .bb-filings {
     background: #fff;
@@ -1249,6 +1611,18 @@ const globalStyles = `
     font-size: 14px;
     font-weight: 700;
     color: var(--ink);
+  }
+  .bb-filings-group { margin-bottom: 16px; }
+  .bb-filings-group:last-child { margin-bottom: 0; }
+  .bb-filings-group-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--primary-bg);
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
   }
   .bb-filings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .bb-filings-card { border: 1px solid var(--line-light); border-radius: 8px; padding: 14px 16px; }
