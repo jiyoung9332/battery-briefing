@@ -7,14 +7,24 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const AdmZip = require('adm-zip');
 
 const SHEET_ID = process.env.SHEET_ID || '1Td8b1PEOLYdaMfNqRcOUu1S0n0-G36sSX85WTKv43oI';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const DART_API_KEY = process.env.DART_API_KEY || '';
 const CACHE_PATH = path.join('scripts', 'ai-cache.json');
 const FIRST_SEEN_CACHE_PATH = path.join('scripts', 'first-seen-cache.json');
 const HISTORY_PATH = path.join('scripts', 'weekly-insight-history.json');
+const DART_CORP_CACHE_PATH = path.join('scripts', 'dart-corp-codes.json');
 const MAX_NEW_SUMMARIES_PER_RUN = 80; // 1회 실행 시 최대 신규 요약 개수 (rate limit 보호)
 const MAX_HISTORY_WEEKS = 8; // 발굴주제 아카이브 보관 주 수
+
+// DART(전자공시) 자동 수집 대상 - 국내 상장사만 가능 (해외사는 DART 대상 아님)
+const DART_COMPANIES = [
+  { id: 'sdi', label: '삼성SDI', nameCandidates: ['삼성에스디아이', '삼성SDI'] },
+  { id: 'lges', label: 'LG에너지솔루션', nameCandidates: ['엘지에너지솔루션', 'LG에너지솔루션'] },
+  { id: 'hyundai', label: '현대자동차', nameCandidates: ['현대자동차'] },
+];
 
 // 증시/주가 관련 키워드 (제목에 들어있으면 자사·경쟁사 카테고리에서 제외)
 const STOCK_BLACKLIST = ['주가', '코스피', '코스닥', '시가총액', '거래량', '매도세', '매수세', '증시', '상한가', '하한가', '52주 신고가', '52주 신저가', '종가', '시초가', '공매도'];
@@ -566,6 +576,127 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
   }
 }
 
+// ━━━━━━━━━━━━━━━━ DART(전자공시) 자동 수집 ━━━━━━━━━━━━━━━━
+// 국내 상장사(삼성SDI/LG에너지솔루션/현대차)의 최근 2주 공시 목록을 가져온다.
+// corp_code는 DART의 corpCode.xml(zip)에서 회사명으로 찾아 1회만 조회 후 캐시한다.
+
+function httpsGetBuffer(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      if (res.statusCode && res.statusCode >= 400) {
+        reject(new Error(`HTTP ${res.statusCode}`));
+        return;
+      }
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
+function httpsGetJSON(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(new Error(`Parse error: ${e.message}`));
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+function extractXmlTag(block, tag) {
+  const m = block.match(new RegExp(`<${tag}>(?:<!\\[CDATA\\[)?([^<]*?)(?:\\]\\]>)?<\\/${tag}>`));
+  return m ? m[1].trim() : null;
+}
+
+async function resolveDartCorpCodes() {
+  const cache = loadJsonCache(DART_CORP_CACHE_PATH, {});
+  const needed = DART_COMPANIES.filter(c => !cache[c.id]);
+  if (needed.length === 0) return cache;
+
+  if (!DART_API_KEY) return cache;
+
+  console.log('  DART corp_code 조회 중... (최초 1회만 실행되고 이후엔 캐시 사용)');
+  const buf = await httpsGetBuffer(`https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key=${DART_API_KEY}`);
+  const zip = new AdmZip(buf);
+  const entry = zip.getEntries().find(e => /CORPCODE/i.test(e.entryName));
+  if (!entry) throw new Error('CORPCODE.xml 항목을 찾을 수 없음 (DART_API_KEY 확인 필요)');
+  const xml = zip.readAsText(entry, 'utf8');
+
+  const blocks = xml.split('<list>').slice(1);
+  for (const block of blocks) {
+    const name = extractXmlTag(block, 'corp_name');
+    const code = extractXmlTag(block, 'corp_code');
+    if (!name || !code) continue;
+    for (const company of DART_COMPANIES) {
+      if (cache[company.id]) continue;
+      if (company.nameCandidates.includes(name)) {
+        cache[company.id] = code;
+        console.log(`  ✓ ${company.label} corp_code 확인: ${code}`);
+      }
+    }
+  }
+  saveJsonCache(DART_CORP_CACHE_PATH, cache);
+  return cache;
+}
+
+function fmtDateCompact(d) {
+  return d.toISOString().slice(0, 10).replace(/-/g, '');
+}
+
+async function fetchDartFilings() {
+  if (!DART_API_KEY) {
+    console.warn('  ⚠ DART_API_KEY 없음 — 공시 수집 건너뜀 (opendart.fss.or.kr에서 무료 발급 가능)');
+    return null;
+  }
+
+  const corpCodeMap = await resolveDartCorpCodes();
+
+  const end = new Date();
+  const begin = new Date(end.getTime() - 14 * 24 * 3600 * 1000);
+  const bgn_de = fmtDateCompact(begin);
+  const end_de = fmtDateCompact(end);
+
+  const companies = [];
+  for (const company of DART_COMPANIES) {
+    const corpCode = corpCodeMap[company.id];
+    if (!corpCode) {
+      console.warn(`  ✗ ${company.label} corp_code를 찾지 못함`);
+      companies.push({ id: company.id, label: company.label, filings: [] });
+      continue;
+    }
+    try {
+      const url = `https://opendart.fss.or.kr/api/list.json?crtfc_key=${DART_API_KEY}&corp_code=${corpCode}&bgn_de=${bgn_de}&end_de=${end_de}&page_no=1&page_count=10`;
+      const json = await httpsGetJSON(url);
+      if (json.status !== '000' && json.status !== '013') {
+        console.warn(`  ✗ ${company.label} DART 조회 실패: ${json.status} ${json.message || ''}`);
+        companies.push({ id: company.id, label: company.label, filings: [] });
+      } else {
+        const filings = (json.list || []).slice(0, 5).map(item => ({
+          title: item.report_nm,
+          date: item.rcept_dt,
+          link: `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${item.rcept_no}`,
+        }));
+        companies.push({ id: company.id, label: company.label, filings });
+        console.log(`  ✓ ${company.label} 공시 ${filings.length}건`);
+      }
+    } catch (e) {
+      console.warn(`  ✗ ${company.label} DART 조회 오류: ${e.message}`);
+      companies.push({ id: company.id, label: company.label, filings: [] });
+    }
+    await sleep(300);
+  }
+
+  return { generatedAt: new Date().toISOString(), companies };
+}
+
 // ━━━━━━━━━━━━━━━━ 메인 실행 ━━━━━━━━━━━━━━━━
 
 (async () => {
@@ -601,6 +732,15 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
     const weeklyInsightHistory = await buildWeeklyInsight(allNews, firstSeenCache);
     const weeklyInsight = weeklyInsightHistory[0] || null;
 
+    // DART 공시 자동 수집 (국내 상장사: 삼성SDI/LG에너지솔루션/현대차)
+    let dartFilings = null;
+    console.log('\n🏛️ DART 공시 수집 중...');
+    try {
+      dartFilings = await fetchDartFilings();
+    } catch (e) {
+      console.warn(`⚠ DART 공시 수집 실패: ${e.message}`);
+    }
+
     const featured = allNews.filter(n => n.featured).slice(0, 4);
 
     const data = {
@@ -608,6 +748,7 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
       featured: featured,
       weeklyInsight: weeklyInsight,
       weeklyInsightHistory: weeklyInsightHistory,
+      dartFilings: dartFilings,
       lastUpdated: new Date().toLocaleString('ko-KR', {
         timeZone: 'Asia/Seoul',
         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -622,6 +763,7 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
     console.log(`📰 뉴스: ${data.news.length}건`);
     console.log(`⭐ 필수: ${data.featured.length}건`);
     console.log(`🧠 주간 인사이트: ${weeklyInsight ? '있음 (' + weeklyInsight.weekStart + ')' : '없음'} · 아카이브 ${weeklyInsightHistory.length}주`);
+    console.log(`🏛️ DART 공시: ${dartFilings ? dartFilings.companies.length + '개사' : '없음 (DART_API_KEY 미설정)'}`);
     console.log(`📁 저장: public/data.json`);
   } catch (e) {
     console.error('❌ Error:', e);
