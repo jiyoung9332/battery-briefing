@@ -31,17 +31,21 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Fetch data from Google Sheet (with AI summary)
         run: node scripts/fetch-data.cjs
         env:
           SHEET_ID: '1Td8b1PEOLYdaMfNqRcOUu1S0n0-G36sSX85WTKv43oI'
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
 
       - name: Commit AI summary cache
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for f in scripts/ai-cache.json scripts/first-seen-cache.json scripts/weekly-insight-history.json; do
+          for f in scripts/ai-cache.json scripts/first-seen-cache.json scripts/weekly-insight-history.json scripts/dart-corp-codes.json; do
             [ -f "$f" ] && git add "$f"
           done
           if ! git diff --staged --quiet; then
@@ -51,9 +55,6 @@ jobs:
             echo "No cache changes to commit"
           fi
         continue-on-error: true
-
-      - name: Install dependencies
-        run: npm install
 
       - name: Build
         run: npm run build
