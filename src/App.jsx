@@ -128,6 +128,7 @@ export default function App() {
   const [activeCat, setActiveCat] = useState(null);
   const [activeSub, setActiveSub] = useState(null);
   const [search, setSearch] = useState('');
+  const [activeView, setActiveView] = useState('home'); // 'home' | 'briefing'
 
   const loadData = async () => {
     setLoading(true);
@@ -156,6 +157,7 @@ export default function App() {
   useEffect(() => { loadData(); }, []);
 
   const handleCatClick = (catId) => {
+    setActiveView('home');
     if (activeCat === catId) {
       setActiveCat(null);
       setActiveSub(null);
@@ -168,6 +170,7 @@ export default function App() {
   };
 
   const handleSubClick = (catId, subId) => {
+    setActiveView('home');
     setActiveCat(catId);
     setActiveSub(activeSub === subId ? null : subId);
     setSearch('');
@@ -175,6 +178,15 @@ export default function App() {
   };
 
   const goHome = () => {
+    setActiveView('home');
+    setActiveCat(null);
+    setActiveSub(null);
+    setSearch('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goBriefing = () => {
+    setActiveView('briefing');
     setActiveCat(null);
     setActiveSub(null);
     setSearch('');
@@ -201,7 +213,14 @@ export default function App() {
     <div className="bb-app">
       <style>{globalStyles}</style>
 
-      <TopNav lastUpdated={lastUpdated} totalCount={news.length} onLogoClick={goHome} />
+      <TopNav
+        lastUpdated={lastUpdated}
+        totalCount={news.length}
+        onLogoClick={goHome}
+        activeView={activeView}
+        onMainClick={goHome}
+        onBriefingClick={goBriefing}
+      />
 
       <div className="bb-layout">
         <Sidebar
@@ -218,10 +237,15 @@ export default function App() {
           {!loading && error && <ErrorView error={error} onRetry={loadData} />}
           {!loading && !error && (
             <>
-              {!activeCat && <HeroBanner />}
+              {activeView === 'home' && !activeCat && <HeroBanner />}
               {featured.length > 0 && <ConcernsBanner featured={featured} />}
 
-              {activeCat ? (
+              {activeView === 'briefing' ? (
+                <BriefingView
+                  weeklyInsight={weeklyInsight}
+                  weeklyInsightHistory={weeklyInsightHistory}
+                />
+              ) : activeCat ? (
                 <CategoryView
                   category={activeCategory}
                   activeSub={activeSub}
@@ -235,8 +259,6 @@ export default function App() {
                 <HomeView
                   news={news}
                   onCatClick={handleCatClick}
-                  weeklyInsight={weeklyInsight}
-                  weeklyInsightHistory={weeklyInsightHistory}
                 />
               )}
             </>
@@ -248,7 +270,7 @@ export default function App() {
 }
 
 // ━━━━━━━━━━ Top Navigation ━━━━━━━━━━
-function TopNav({ lastUpdated, totalCount, onLogoClick }) {
+function TopNav({ lastUpdated, totalCount, onLogoClick, activeView, onMainClick, onBriefingClick }) {
   return (
     <header className="bb-topnav">
       <div className="bb-logo" onClick={onLogoClick}>
@@ -257,7 +279,8 @@ function TopNav({ lastUpdated, totalCount, onLogoClick }) {
         <span className="bb-logo-badge">SDI 기획그룹</span>
       </div>
       <nav className="bb-top-menu">
-        <a className="active">메인</a>
+        <a className={activeView === 'home' ? 'active' : ''} onClick={onMainClick}>메인</a>
+        <a className={activeView === 'briefing' ? 'active' : ''} onClick={onBriefingClick}>주간 브리핑</a>
       </nav>
       <div className="bb-top-right">
         {lastUpdated && <span className="bb-last-update">업데이트 · {lastUpdated}</span>}
@@ -513,14 +536,36 @@ function TopicArchive({ history }) {
   );
 }
 
-// ━━━━━━━━━━ Home View ━━━━━━━━━━
-function HomeView({ news, onCatClick, weeklyInsight, weeklyInsightHistory }) {
+// ━━━━━━━━━━ 주간 브리핑 (전용 페이지) ━━━━━━━━━━
+function BriefingView({ weeklyInsight, weeklyInsightHistory }) {
   return (
     <>
+      <div className="bb-page-header">
+        <div className="bb-page-title-area">
+          <div className="bb-page-icon"><Sparkles size={20} color="#5B4FE0" strokeWidth={2.2} /></div>
+          <div>
+            <div className="bb-page-title">주간 브리핑</div>
+            <div className="bb-page-desc">AI가 정리한 이번 주 배터리 산업 키워드 · 이슈 · 발굴주제</div>
+          </div>
+        </div>
+        <div className="bb-breadcrumb">
+          <Home size={13} color="#2C7DC4" />
+          <span>›</span>
+          <span className="current">주간 브리핑</span>
+        </div>
+      </div>
+
       <WeeklyInsight data={weeklyInsight} />
       <CompetitorCompare competitors={weeklyInsight?.competitors} />
       <TopicArchive history={weeklyInsightHistory} />
+    </>
+  );
+}
 
+// ━━━━━━━━━━ Home View ━━━━━━━━━━
+function HomeView({ news, onCatClick }) {
+  return (
+    <>
       <div className="bb-cat-grid">
         {CATEGORIES.map(cat => {
           const items = news.filter(n => n.cat === cat.id).slice(0, 4);
