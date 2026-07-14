@@ -49,6 +49,59 @@ const PLANNING_DISCUSSIONS = [
 ];
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⬇️  AI가 아직 이번 주 분석을 만들지 못했을 때 임시로 보여줄 샘플입니다.
+// ⬇️  실제 데이터(data.json의 weeklyInsight)가 생기면 자동으로 이 샘플 대신 그걸 보여줍니다.
+// ⬇️  내용을 자유롭게 고쳐서 원하는 시안으로 만들 수 있습니다.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const SAMPLE_WEEKLY_INSIGHT = {
+  isSample: true,
+  weekRange: '7/7 ~ 7/13',
+  articleCount: 132,
+  keywords: [
+    { keyword: 'FEOC 규제', count: 14, note: '해외우려기업 규정 강화' },
+    { keyword: 'ESS 성장', count: 11, note: 'AI 데이터센터발 수요' },
+    { keyword: 'LFP 국산화', count: 9, note: '국내 소재사 증설' },
+    { keyword: '배터리 여권·CBAM', count: 7, note: 'EU 탄소규제' },
+    { keyword: 'AI 데이터센터', count: 6, note: '전력 수요 급증' },
+    { keyword: '탈중국 공급망', count: 5, note: '비중국 소재 확보 경쟁' },
+  ],
+  issues: [
+    {
+      title: '美 FEOC 규제 강화, 북미 ESS向 비중국 LFP 공급 부족 우려',
+      summary: '해외우려기업(FEOC) 규정이 확대되며 북미 ESS 시장에서 비중국산 LFP 공급이 빠듯해질 전망이다.',
+      why: '비중국 공급망을 갖춘 국내 업체에는 기회 요인.',
+    },
+    {
+      title: '전기차 수요 둔화 속 ESS·AI데이터센터가 배터리 새 성장축으로',
+      summary: '완성차 EV 수요는 정체됐지만 AI 데이터센터발 전력 수요가 ESS 시장을 밀어올리고 있다.',
+      why: '중장기 포트폴리오 재편의 핵심 변수.',
+    },
+    {
+      title: '배터리 여권·CBAM 등 EU 탄소규제, 공급망 탄소데이터 대응 필수화',
+      summary: '디지털배터리여권과 탄소국경조정제도 시행이 임박하며 원료 이력 관리 요구가 커지고 있다.',
+      why: 'EU향 출하 비중이 있는 기업은 선제 대응 필요.',
+    },
+  ],
+  topics: [
+    {
+      title: '전동공구·고객사向 ESS/AI데이터센터 파생 수요 대응 전략',
+      description: '소형전지 고객군에서도 ESS 연계 수요가 생길 수 있는지 TTI·Bosch 등 주요 고객사 로드맵을 점검한다.',
+      rationale: 'ESS·AI데이터센터 수요 관련 뉴스 다수 발생',
+    },
+    {
+      title: '배터리 여권·CBAM 대응 자사 공급망 탄소데이터 체계 점검',
+      description: 'EU향 소형전지 출하 비중을 감안해 원료 추적성 데이터 확보 시급성을 검토한다.',
+      rationale: 'EU 탄소규제 관련 뉴스 흐름',
+    },
+    {
+      title: '비중국 LFP 공급망 파트너십 검토',
+      description: '국내 소재사 LFP 증설 흐름에 맞춰 소형전지 원가 경쟁력 확보 방안을 논의한다.',
+      rationale: 'LFP 국산화·FEOC 규제 뉴스 흐름',
+    },
+  ],
+};
+
 export default function App() {
   const [news, setNews] = useState([]);
   const [featured, setFeatured] = useState([]);
@@ -69,7 +122,7 @@ export default function App() {
       const data = await response.json();
       setNews(data.news || []);
       setFeatured(data.featured || []);
-      setWeeklyInsight(data.weeklyInsight || null);
+      setWeeklyInsight(data.weeklyInsight || SAMPLE_WEEKLY_INSIGHT);
       setLastUpdated(data.lastUpdated || '');
     } catch (e) {
       console.error(e);
@@ -326,7 +379,7 @@ function WeeklyInsight({ data }) {
     return null;
   }
 
-  const { weekRange, articleCount, keywords = [], issues = [], topics = [] } = data;
+  const { isSample, weekRange, articleCount, keywords = [], issues = [], topics = [] } = data;
 
   return (
     <div className="bb-weekly">
@@ -334,8 +387,11 @@ function WeeklyInsight({ data }) {
         <div className="bb-weekly-icon">
           <Sparkles size={20} color="#5B4FE0" strokeWidth={2.2} />
         </div>
-        <div>
-          <div className="bb-weekly-title">이번 주 배터리 산업 브리핑</div>
+        <div style={{ flex: 1 }}>
+          <div className="bb-weekly-title">
+            이번 주 배터리 산업 브리핑
+            {isSample && <span className="bb-weekly-sample-badge">샘플</span>}
+          </div>
           <div className="bb-weekly-desc">
             {weekRange && <>{weekRange} </>}
             {typeof articleCount === 'number' && <>· 뉴스 {articleCount}건 분석 </>}
@@ -790,6 +846,17 @@ const globalStyles = `
     font-weight: 700;
     color: var(--ink);
     letter-spacing: -0.015em;
+  }
+  .bb-weekly-sample-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    vertical-align: 2px;
   }
   .bb-weekly-desc {
     font-size: 13px;
