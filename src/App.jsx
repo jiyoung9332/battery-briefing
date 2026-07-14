@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target, History } from 'lucide-react';
+import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target, History, Award, Landmark } from 'lucide-react';
 
 // 카테고리 정의 (기존과 동일)
 const CATEGORIES = [
@@ -117,11 +117,41 @@ const SAMPLE_WEEKLY_HISTORY = [
   },
 ];
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⬇️  DART 공시 자동수집이 아직 연결 안 됐을 때 임시로 보여줄 샘플입니다.
+// ⬇️  DART_API_KEY가 설정되면 자동으로 이 샘플 대신 실제 공시 목록을 보여줍니다.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const SAMPLE_DART_FILINGS = {
+  isSample: true,
+  companies: [
+    {
+      id: 'sdi', label: '삼성SDI',
+      filings: [
+        { title: '분기보고서 (2026.1분기)', date: '20260514', link: '#' },
+        { title: '주요사항보고서(자기주식취득결정)', date: '20260508', link: '#' },
+      ],
+    },
+    {
+      id: 'lges', label: 'LG에너지솔루션',
+      filings: [
+        { title: '분기보고서 (2026.1분기)', date: '20260515', link: '#' },
+      ],
+    },
+    {
+      id: 'hyundai', label: '현대자동차',
+      filings: [
+        { title: '주요사항보고서(투자판단관련주요경영사항)', date: '20260510', link: '#' },
+      ],
+    },
+  ],
+};
+
 export default function App() {
   const [news, setNews] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [weeklyInsight, setWeeklyInsight] = useState(null);
   const [weeklyInsightHistory, setWeeklyInsightHistory] = useState(null);
+  const [dartFilings, setDartFilings] = useState(null);
   const [lastUpdated, setLastUpdated] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -144,6 +174,11 @@ export default function App() {
         data.weeklyInsightHistory && data.weeklyInsightHistory.length > 0
           ? data.weeklyInsightHistory
           : SAMPLE_WEEKLY_HISTORY
+      );
+      setDartFilings(
+        data.dartFilings && data.dartFilings.companies && data.dartFilings.companies.length > 0
+          ? data.dartFilings
+          : SAMPLE_DART_FILINGS
       );
       setLastUpdated(data.lastUpdated || '');
     } catch (e) {
@@ -193,6 +228,14 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const goFilings = () => {
+    setActiveView('filings');
+    setActiveCat(null);
+    setActiveSub(null);
+    setSearch('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const activeCategory = CATEGORIES.find(c => c.id === activeCat);
 
   const filteredNews = useMemo(() => {
@@ -220,6 +263,7 @@ export default function App() {
         activeView={activeView}
         onMainClick={goHome}
         onBriefingClick={goBriefing}
+        onFilingsClick={goFilings}
       />
 
       <div className="bb-layout">
@@ -245,6 +289,8 @@ export default function App() {
                   weeklyInsight={weeklyInsight}
                   weeklyInsightHistory={weeklyInsightHistory}
                 />
+              ) : activeView === 'filings' ? (
+                <FilingsView dartFilings={dartFilings} />
               ) : activeCat ? (
                 <CategoryView
                   category={activeCategory}
@@ -270,7 +316,7 @@ export default function App() {
 }
 
 // ━━━━━━━━━━ Top Navigation ━━━━━━━━━━
-function TopNav({ lastUpdated, totalCount, onLogoClick, activeView, onMainClick, onBriefingClick }) {
+function TopNav({ lastUpdated, totalCount, onLogoClick, activeView, onMainClick, onBriefingClick, onFilingsClick }) {
   return (
     <header className="bb-topnav">
       <div className="bb-logo" onClick={onLogoClick}>
@@ -281,6 +327,7 @@ function TopNav({ lastUpdated, totalCount, onLogoClick, activeView, onMainClick,
       <nav className="bb-top-menu">
         <a className={activeView === 'home' ? 'active' : ''} onClick={onMainClick}>메인</a>
         <a className={activeView === 'briefing' ? 'active' : ''} onClick={onBriefingClick}>주간 브리핑</a>
+        <a className={activeView === 'filings' ? 'active' : ''} onClick={onFilingsClick}>특허·공시</a>
       </nav>
       <div className="bb-top-right">
         {lastUpdated && <span className="bb-last-update">업데이트 · {lastUpdated}</span>}
@@ -558,6 +605,83 @@ function BriefingView({ weeklyInsight, weeklyInsightHistory }) {
       <WeeklyInsight data={weeklyInsight} />
       <CompetitorCompare competitors={weeklyInsight?.competitors} />
       <TopicArchive history={weeklyInsightHistory} />
+    </>
+  );
+}
+
+// ━━━━━━━━━━ DART 공시 목록 ━━━━━━━━━━
+function DartFilings({ data }) {
+  if (!data || !data.companies || data.companies.length === 0) return null;
+  const { isSample, companies } = data;
+
+  return (
+    <div className="bb-filings">
+      <div className="bb-filings-header">
+        <div className="bb-filings-title">
+          <Landmark size={15} /> 최근 공시 (최근 2주 · 국내 상장사)
+          {isSample && <span className="bb-weekly-sample-badge">샘플</span>}
+        </div>
+      </div>
+      <div className="bb-filings-grid">
+        {companies.map((c) => (
+          <div className="bb-filings-card" key={c.id}>
+            <div className="bb-filings-card-label">{c.label}</div>
+            {(!c.filings || c.filings.length === 0) ? (
+              <div className="bb-filings-empty">최근 2주 내 공시 없음</div>
+            ) : (
+              <ul className="bb-filings-list">
+                {c.filings.map((item, idx) => (
+                  <li key={idx}>
+                    <a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                    <span className="bb-filings-date">{item.date}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ 특허 동향 (준비 중 placeholder) ━━━━━━━━━━
+function PatentSignals({ patents }) {
+  if (patents && patents.length > 0) {
+    return null; // TODO: 특허 API 키 발급 후 실제 렌더링 구현
+  }
+  return (
+    <div className="bb-patents-placeholder">
+      <div className="bb-patents-placeholder-icon"><Award size={18} color="#999" /></div>
+      <div>
+        <div className="bb-patents-placeholder-title">특허 동향 (준비 중)</div>
+        <div className="bb-patents-placeholder-desc">특허 API 키 발급이 완료되면 경쟁사·고객사 특허 출원 동향이 여기 자동으로 표시됩니다.</div>
+      </div>
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ 특허·공시 페이지 ━━━━━━━━━━
+function FilingsView({ dartFilings }) {
+  return (
+    <>
+      <div className="bb-page-header">
+        <div className="bb-page-title-area">
+          <div className="bb-page-icon"><Landmark size={20} color="#2C7DC4" strokeWidth={2.2} /></div>
+          <div>
+            <div className="bb-page-title">특허·공시</div>
+            <div className="bb-page-desc">공식 공시자료·특허 데이터 기반 오픈소스 시그널</div>
+          </div>
+        </div>
+        <div className="bb-breadcrumb">
+          <Home size={13} color="#2C7DC4" />
+          <span>›</span>
+          <span className="current">특허·공시</span>
+        </div>
+      </div>
+
+      <DartFilings data={dartFilings} />
+      <PatentSignals patents={null} />
     </>
   );
 }
@@ -1109,6 +1233,57 @@ const globalStyles = `
     flex-shrink: 0;
   }
 
+  /* ━━━ DART 공시 ━━━ */
+  .bb-filings {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+  }
+  .bb-filings-header { margin-bottom: 14px; }
+  .bb-filings-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .bb-filings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .bb-filings-card { border: 1px solid var(--line-light); border-radius: 8px; padding: 14px 16px; }
+  .bb-filings-card-label { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+  .bb-filings-empty { font-size: 12.5px; color: var(--ink-faint); padding: 6px 0; }
+  .bb-filings-list { display: flex; flex-direction: column; gap: 9px; list-style: none; padding: 0; margin: 0; }
+  .bb-filings-list li { display: flex; flex-direction: column; gap: 2px; }
+  .bb-filings-list a { font-size: 13px; color: var(--primary-dark); font-weight: 500; line-height: 1.4; }
+  .bb-filings-list a:hover { text-decoration: underline; }
+  .bb-filings-date { font-size: 11.5px; color: var(--ink-faint); }
+
+  /* ━━━ 특허 동향 (준비 중) ━━━ */
+  .bb-patents-placeholder {
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .bb-patents-placeholder-icon {
+    width: 38px;
+    height: 38px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .bb-patents-placeholder-title { font-size: 14px; font-weight: 700; color: var(--ink-mute); margin-bottom: 3px; }
+  .bb-patents-placeholder-desc { font-size: 12.5px; color: var(--ink-faint); line-height: 1.5; }
+
   /* ━━━ Hero Banner (Main Slogan) ━━━ */
   .bb-hero {
     background: linear-gradient(135deg, #FFFFFF 0%, #F0F7FB 100%);
@@ -1273,5 +1448,6 @@ const globalStyles = `
     .bb-logo-badge { display: none; }
     .bb-cat-grid { grid-template-columns: 1fr; }
     .bb-compare-grid { grid-template-columns: 1fr; }
+    .bb-filings-grid { grid-template-columns: 1fr; }
   }
 `;
