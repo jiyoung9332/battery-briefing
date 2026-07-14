@@ -419,6 +419,7 @@ function buildWeeklyInsightPrompt(articles) {
 4. topics: 위 뉴스 흐름을 바탕으로 삼성SDI 소형전지(전동공구·고객사 대응 중심) 기획그룹이 이번 주에 논의하거나 발굴해볼 만한 주제 3~5개. 구체적이고 실행 가능한 형태로 제안하고, 어떤 뉴스/흐름에서 이 주제가 도출됐는지 근거를 함께 제시
 5. reportCandidates: 위 이슈들 중 별도의 정식 보고서로 작성할 가치가 있는 주제 1~3개. 각각 title(보고서 제목)과 targetAudience("사업부장" 또는 "지원팀장" 중 하나), reason(왜 보고할 가치가 있는지 1문장)을 포함
 6. overallResponse: 이번 주 이슈 전체를 종합했을 때 삼성SDI 소형전지 조직이 취해야 할 전반적 대응방향 2~3문장
+7. themeClusters: 이번 주 이슈·키워드를 2~4개의 상위 테마로 묶어주세요. 각 테마마다 짧은 태그 형태의 하위 항목 2~3개를 포함합니다 (예: 테마 "ESS 성장" 아래 "중국 LFP 증설", "LG엔솔 46시리즈 수주"처럼 아주 짧은 명사구로). 하위 항목은 문장이 아니라 5~12자 내외의 짧은 태그여야 합니다.
 
 반드시 아래 JSON 형식으로만 답변하세요. 다른 설명이나 마크다운 코드블록 없이 순수 JSON 텍스트만 출력하세요.
 
@@ -428,7 +429,8 @@ function buildWeeklyInsightPrompt(articles) {
   "issues": [{"title": "string", "summary": "string", "impact": number, "owner": "string", "sdiImpact": "string", "actionPlan": "string", "meetingCandidate": boolean, "shareTargets": ["string"]}],
   "topics": [{"title": "발굴 주제 제목", "description": "무엇을 논의/실행해야 하는지 구체적 설명 2~3문장", "rationale": "어떤 뉴스·흐름에서 도출됐는지"}],
   "reportCandidates": [{"title": "string", "targetAudience": "사업부장 또는 지원팀장", "reason": "string"}],
-  "overallResponse": "string"
+  "overallResponse": "string",
+  "themeClusters": [{"theme": "string", "items": ["string"]}]
 }
 
 뉴스 목록:
@@ -446,9 +448,10 @@ async function generateWeeklyInsight(pool, weekStart) {
         !Array.isArray(result.keywords) ||
         !Array.isArray(result.issues) ||
         !Array.isArray(result.topics) ||
-        !Array.isArray(result.reportCandidates)
+        !Array.isArray(result.reportCandidates) ||
+        !Array.isArray(result.themeClusters)
       ) {
-        throw new Error('응답 형식이 예상과 다름 (keywords/issues/topics/reportCandidates 배열 필요)');
+        throw new Error('응답 형식이 예상과 다름 (keywords/issues/topics/reportCandidates/themeClusters 배열 필요)');
       }
       return {
         weekStart,
@@ -461,6 +464,7 @@ async function generateWeeklyInsight(pool, weekStart) {
         topics: result.topics,
         reportCandidates: result.reportCandidates,
         overallResponse: result.overallResponse || '',
+        themeClusters: result.themeClusters,
       };
     } catch (e) {
       lastError = e;
@@ -562,7 +566,7 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
 
   // 이번 주 것이 이미 있고, 최신 스키마(summary/reportCandidates 포함)로 생성된 것이면 그대로 재사용 (주 1회만 생성)
   // 스키마가 바뀐 뒤 남아있는 예전 캐시는 여기서 걸러져서 자동으로 다시 생성된다.
-  const hasCurrentSchema = latest && typeof latest.summary === 'string' && Array.isArray(latest.reportCandidates);
+  const hasCurrentSchema = latest && typeof latest.summary === 'string' && Array.isArray(latest.reportCandidates) && Array.isArray(latest.themeClusters);
   if (latest && latest.weekStart === weekStart && hasCurrentSchema) {
     console.log(`\n📌 주간 인사이트: 이번 주(${weekStart}) 캐시 재사용`);
     return history;
