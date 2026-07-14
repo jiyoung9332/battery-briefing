@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb } from 'lucide-react';
+import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target } from 'lucide-react';
 
 // 카테고리 정의 (기존과 동일)
 const CATEGORIES = [
@@ -52,6 +52,7 @@ const PLANNING_DISCUSSIONS = [
 export default function App() {
   const [news, setNews] = useState([]);
   const [featured, setFeatured] = useState([]);
+  const [weeklyInsight, setWeeklyInsight] = useState(null);
   const [lastUpdated, setLastUpdated] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -68,6 +69,7 @@ export default function App() {
       const data = await response.json();
       setNews(data.news || []);
       setFeatured(data.featured || []);
+      setWeeklyInsight(data.weeklyInsight || null);
       setLastUpdated(data.lastUpdated || '');
     } catch (e) {
       console.error(e);
@@ -159,6 +161,7 @@ export default function App() {
                 <HomeView
                   news={news}
                   onCatClick={handleCatClick}
+                  weeklyInsight={weeklyInsight}
                 />
               )}
             </>
@@ -317,11 +320,90 @@ function PlanningDiscussions() {
   );
 }
 
+// ━━━━━━━━━━ 이번 주 배터리 산업 브리핑 (AI 자동 생성) ━━━━━━━━━━
+function WeeklyInsight({ data }) {
+  if (!data || (!data.keywords?.length && !data.issues?.length && !data.topics?.length)) {
+    return null;
+  }
+
+  const { weekRange, articleCount, keywords = [], issues = [], topics = [] } = data;
+
+  return (
+    <div className="bb-weekly">
+      <div className="bb-weekly-header">
+        <div className="bb-weekly-icon">
+          <Sparkles size={20} color="#5B4FE0" strokeWidth={2.2} />
+        </div>
+        <div>
+          <div className="bb-weekly-title">이번 주 배터리 산업 브리핑</div>
+          <div className="bb-weekly-desc">
+            {weekRange && <>{weekRange} </>}
+            {typeof articleCount === 'number' && <>· 뉴스 {articleCount}건 분석 </>}
+            · AI 자동 생성
+          </div>
+        </div>
+      </div>
+
+      {keywords.length > 0 && (
+        <div className="bb-weekly-block">
+          <div className="bb-weekly-block-title"><Hash size={15} /> 이번 주 키워드</div>
+          <div className="bb-keyword-chips">
+            {keywords.map((k, idx) => (
+              <span className="bb-keyword-chip" key={idx} title={k.note || ''}>
+                {k.keyword}
+                {typeof k.count === 'number' && <em>{k.count}</em>}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {issues.length > 0 && (
+        <div className="bb-weekly-block">
+          <div className="bb-weekly-block-title"><Flame size={15} /> 주요 이슈</div>
+          <div className="bb-issue-list">
+            {issues.map((issue, idx) => (
+              <div className="bb-issue-item" key={idx}>
+                <div className="bb-issue-num">{idx + 1}</div>
+                <div className="bb-issue-body">
+                  <div className="bb-issue-title">{issue.title}</div>
+                  {issue.summary && <div className="bb-issue-summary">{issue.summary}</div>}
+                  {issue.why && <div className="bb-issue-why">{issue.why}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {topics.length > 0 && (
+        <div className="bb-weekly-block bb-weekly-topics-block">
+          <div className="bb-weekly-block-title"><Target size={15} /> 기획그룹이 발굴해볼 주제</div>
+          <div className="bb-topic-cards">
+            {topics.map((topic, idx) => (
+              <div className="bb-topic-card" key={idx}>
+                <div className="bb-topic-num">{idx + 1}</div>
+                <div className="bb-topic-body">
+                  <div className="bb-topic-title">{topic.title}</div>
+                  {topic.description && <div className="bb-topic-desc">{topic.description}</div>}
+                  {topic.rationale && <div className="bb-topic-rationale">근거 · {topic.rationale}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ━━━━━━━━━━ Home View ━━━━━━━━━━
-function HomeView({ news, onCatClick }) {
+function HomeView({ news, onCatClick, weeklyInsight }) {
   return (
     <>
       <PlanningDiscussions />
+
+      <WeeklyInsight data={weeklyInsight} />
 
       <div className="bb-cat-grid">
         {CATEGORIES.map(cat => {
@@ -536,6 +618,8 @@ const globalStyles = `
     --line-light: #EEF1F5;
     --accent: #E74C3C;
     --warning: #F39C12;
+    --insight: #5B4FE0;
+    --insight-bg: #EFEDFC;
   }
 
   * { box-sizing: border-box; }
@@ -673,6 +757,124 @@ const globalStyles = `
     font-weight: 500;
     flex: 1;
   }
+
+  /* ━━━ 이번 주 배터리 산업 브리핑 (AI) ━━━ */
+  .bb-weekly {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--insight);
+    border-radius: 6px;
+    padding: 24px 26px;
+    margin-bottom: 22px;
+  }
+  .bb-weekly-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line-light);
+  }
+  .bb-weekly-icon {
+    width: 42px;
+    height: 42px;
+    background: var(--insight-bg);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .bb-weekly-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+  }
+  .bb-weekly-desc {
+    font-size: 13px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+  .bb-weekly-block { margin-bottom: 22px; }
+  .bb-weekly-block:last-child { margin-bottom: 0; }
+  .bb-weekly-block-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--insight);
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .bb-keyword-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bb-keyword-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--insight);
+    background: var(--insight-bg);
+    padding: 7px 13px;
+    border-radius: 20px;
+    cursor: default;
+  }
+  .bb-keyword-chip em {
+    font-style: normal;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--insight);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+  .bb-issue-list { display: flex; flex-direction: column; gap: 14px; }
+  .bb-issue-item { display: flex; gap: 14px; align-items: flex-start; }
+  .bb-issue-num {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    background: var(--insight-bg);
+    color: var(--insight);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .bb-issue-body { flex: 1; min-width: 0; }
+  .bb-issue-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px; letter-spacing: -0.01em; }
+  .bb-issue-summary { font-size: 13.5px; color: var(--ink-mute); line-height: 1.6; margin-bottom: 4px; }
+  .bb-issue-why { font-size: 12.5px; color: var(--insight); font-weight: 500; }
+  .bb-topic-cards { display: flex; flex-direction: column; gap: 12px; }
+  .bb-topic-card {
+    display: flex;
+    gap: 14px;
+    background: var(--insight-bg);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .bb-topic-num {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    background: var(--insight);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .bb-topic-body { flex: 1; min-width: 0; }
+  .bb-topic-title { font-size: 15px; font-weight: 700; color: #382F8C; margin-bottom: 5px; letter-spacing: -0.01em; }
+  .bb-topic-desc { font-size: 13.5px; color: #4A4470; line-height: 1.6; margin-bottom: 6px; }
+  .bb-topic-rationale { font-size: 12.5px; color: #6B63B0; }
 
   /* ━━━ Hero Banner (Main Slogan) ━━━ */
   .bb-hero {
