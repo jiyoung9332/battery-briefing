@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target, History, Award, Landmark, Download } from 'lucide-react';
+import { Zap, FileText, Users, Swords, Building2, Clock, Star, Search, RefreshCw, AlertCircle, ChevronRight, Sparkles, Home, ExternalLink, Lightbulb, Hash, Flame, Target, History, Award, Landmark, Download, TrendingUp } from 'lucide-react';
 import { generateReportPptx, generateReportDocx } from './report-builder';
 
 // 카테고리 정의 (기존과 동일)
@@ -36,6 +36,32 @@ const SUB_LABEL = {
   lges: 'LGES', catl: 'CATL', ampace: 'AMPACE', eve: 'EVE',
   'samsung-mx': '삼성전자 MX', tti: 'TTI', bosch: 'Bosch', volvo: 'Volvo',
   bmw: 'BMW', vwg: 'VWG', spacex: 'Space X', hyundai: '현대자동차', rivian: 'Rivian',
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⬇️  AI가 아직 오늘의 분석을 만들지 못했을 때 임시로 보여줄 샘플입니다.
+// ⬇️  실제 데이터(data.json의 dailyInsight)가 생기면 자동으로 이 샘플 대신 그걸 보여줍니다.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const SAMPLE_DAILY_INSIGHT = {
+  isSample: true,
+  date: '2026-07-21',
+  articleCount: 18,
+  keywords: [
+    { keyword: 'FEOC 규제', count: 4 },
+    { keyword: 'ESS 성장', count: 3 },
+    { keyword: '리튬 가격', count: 3 },
+    { keyword: '46파이 배터리', count: 2 },
+    { keyword: '전고체 전지', count: 2 },
+  ],
+  categorySummaries: [
+    { cat: 'policy', summary: '美 FEOC 규제 후속 세부지침 관련 보도가 이어지며 비중국 공급망 반사이익 기대가 커지고 있다.' },
+    { cat: 'competitor', summary: 'CATL·LGES가 ESS向 수주 확대 소식을 발표했고, 중국 업체들의 LFP 증설 소식도 이어졌다.' },
+    { cat: 'customer', summary: 'TTI·Bosch 등 전동공구 고객사의 하반기 물량 계획 관련 기사가 있었다.' },
+  ],
+  reportAgenda: [
+    { title: 'FEOC 규제 후속지침에 따른 비중국 공급망 영향 점검', reason: '오늘 관련 기사가 다수 보도되어 사업부 차원의 대응 방향 검토가 필요함' },
+    { title: 'ESS向 경쟁사 수주 확대 동향 공유', reason: 'CATL·LGES 수주 소식이 소형전지 파생 수요 판단에 참고가 될 수 있음' },
+  ],
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -198,12 +224,57 @@ const SAMPLE_DART_FILINGS = {
   ],
 };
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⬇️  DART 분기 실적(재무제표) 자동수집이 아직 연결 안 됐을 때 임시로 보여줄 샘플입니다.
+// ⬇️  DART_API_KEY가 설정되면 자동으로 이 샘플 대신 실제 매출/영업이익 데이터를 보여줍니다.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const SAMPLE_DART_FINANCIALS = {
+  isSample: true,
+  companies: [
+    {
+      id: 'sdi', label: '삼성SDI', type: 'battery',
+      financials: {
+        reportLabel: '1분기보고서', bsnsYear: '2026',
+        revenue: { current: '5123456789000', prev: '4890123456000' },
+        operatingProfit: { current: '123456789000', prev: '98765432000' },
+        netProfit: { current: '87654321000', prev: '65432109000' },
+      },
+      trend: [
+        { label: '3분기(누적) 2025', revenue: '14200000000000', operatingProfit: '310000000000' },
+        { label: '사업보고서(연간) 2025', revenue: '19800000000000', operatingProfit: '420000000000' },
+        { label: '1분기 2026', revenue: '5123456789000', operatingProfit: '123456789000' },
+      ],
+    },
+    {
+      id: 'lges', label: 'LG에너지솔루션', type: 'battery',
+      financials: {
+        reportLabel: '1분기보고서', bsnsYear: '2026',
+        revenue: { current: '6234567890000', prev: '5987654321000' },
+        operatingProfit: { current: '234567890000', prev: '198765432000' },
+        netProfit: null,
+      },
+      trend: [
+        { label: '3분기(누적) 2025', revenue: '17600000000000', operatingProfit: '540000000000' },
+        { label: '사업보고서(연간) 2025', revenue: '24100000000000', operatingProfit: '710000000000' },
+        { label: '1분기 2026', revenue: '6234567890000', operatingProfit: '234567890000' },
+      ],
+    },
+    {
+      id: 'hyundai', label: '현대자동차', type: 'customer',
+      financials: null,
+      trend: [],
+    },
+  ],
+};
+
 export default function App() {
   const [news, setNews] = useState([]);
   const [featured, setFeatured] = useState([]);
+  const [dailyInsight, setDailyInsight] = useState(null);
   const [weeklyInsight, setWeeklyInsight] = useState(null);
   const [weeklyInsightHistory, setWeeklyInsightHistory] = useState(null);
   const [dartFilings, setDartFilings] = useState(null);
+  const [dartFinancials, setDartFinancials] = useState(null);
   const [lastUpdated, setLastUpdated] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -221,6 +292,7 @@ export default function App() {
       const data = await response.json();
       setNews(data.news || []);
       setFeatured(data.featured || []);
+      setDailyInsight(data.dailyInsight || SAMPLE_DAILY_INSIGHT);
       setWeeklyInsight(data.weeklyInsight || SAMPLE_WEEKLY_INSIGHT);
       setWeeklyInsightHistory(
         data.weeklyInsightHistory && data.weeklyInsightHistory.length > 0
@@ -231,6 +303,11 @@ export default function App() {
         data.dartFilings && data.dartFilings.companies && data.dartFilings.companies.length > 0
           ? data.dartFilings
           : SAMPLE_DART_FILINGS
+      );
+      setDartFinancials(
+        data.dartFinancials && data.dartFinancials.companies && data.dartFinancials.companies.length > 0
+          ? data.dartFinancials
+          : SAMPLE_DART_FINANCIALS
       );
       setLastUpdated(data.lastUpdated || '');
     } catch (e) {
@@ -347,7 +424,8 @@ export default function App() {
           {!loading && !error && (
             <>
               {activeView === 'news' && !activeCat && <HeroBanner />}
-              {activeView === 'news' && featured.length > 0 && <ConcernsBanner featured={featured} />}
+
+              {activeView === 'news' && activeCat && featured.length > 0 && <ConcernsBanner featured={featured} />}
 
               {activeView === 'briefing' ? (
                 <BriefingView
@@ -356,7 +434,7 @@ export default function App() {
                   news={news}
                 />
               ) : activeView === 'filings' ? (
-                <FilingsView dartFilings={dartFilings} />
+                <FilingsView dartFilings={dartFilings} dartFinancials={dartFinancials} />
               ) : activeView === 'executive' ? (
                 <ExecutiveIssuesView weeklyInsight={weeklyInsight} weeklyInsightHistory={weeklyInsightHistory} />
               ) : activeView === 'report' ? (
@@ -372,7 +450,11 @@ export default function App() {
                   onSubClick={handleSubClick}
                 />
               ) : (
-                <HomeView news={news} onCatClick={handleCatClick} />
+                <>
+                  <DailySection data={dailyInsight} weeklyInsightHistory={weeklyInsightHistory} />
+                  <NewsSector news={news} featured={featured} onCatClick={handleCatClick} />
+                  <FilingsSector dartFinancials={dartFinancials} dartFilings={dartFilings} onViewAll={goFilings} />
+                </>
               )}
             </>
           )}
@@ -473,6 +555,139 @@ function HeroBanner() {
       <p className="bb-hero-subtitle">
         삼성 SDI 소형 배터리의 무한한 확장
       </p>
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ 오늘의 배터리 브리핑 (첫 페이지 섹션 1) ━━━━━━━━━━
+function DailyKeywords({ keywords }) {
+  if (!keywords || keywords.length === 0) return null;
+  const maxCount = Math.max(...keywords.map(k => (typeof k.count === 'number' ? k.count : 0)), 1);
+  return (
+    <div className="bb-daily-keywords">
+      {keywords.map((k, idx) => {
+        const ratio = typeof k.count === 'number' ? k.count / maxCount : 0.3;
+        return (
+          <span
+            key={idx}
+            className="bb-daily-keyword-chip"
+            style={{ background: `rgba(44, 125, 196, ${0.10 + ratio * 0.28})` }}
+          >
+            {k.keyword}
+            {typeof k.count === 'number' && <em>{k.count}</em>}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function DailyCategorySummaries({ summaries }) {
+  if (!summaries || summaries.length === 0) return null;
+  return (
+    <div className="bb-daily-catsum-grid">
+      {summaries.map((s, idx) => {
+        const cat = CATEGORIES.find(c => c.id === s.cat);
+        return (
+          <div className="bb-daily-catsum-card" key={idx}>
+            <div className="bb-daily-catsum-label">{cat ? cat.label : s.cat}</div>
+            <div className="bb-daily-catsum-text">{s.summary}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DailyReportAgenda({ items }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="bb-daily-agenda">
+      <div className="bb-daily-agenda-title"><Target size={14} /> 오늘의 보고안건</div>
+      <div className="bb-daily-agenda-list">
+        {items.map((item, idx) => (
+          <div className="bb-daily-agenda-item" key={idx}>
+            <div className="bb-daily-agenda-item-title">{item.title}</div>
+            {item.reason && <div className="bb-daily-agenda-item-reason">{item.reason}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DailyInsight({ data }) {
+  if (!data || (!data.keywords?.length && !data.categorySummaries?.length && !data.reportAgenda?.length)) {
+    return null;
+  }
+
+  return (
+    <div className="bb-daily">
+      <div className="bb-daily-header">
+        <div className="bb-daily-icon"><Flame size={18} color="#2C7DC4" strokeWidth={2.2} /></div>
+        <div style={{ flex: 1 }}>
+          <div className="bb-daily-title">
+            오늘의 배터리 브리핑
+            {data.isSample && <span className="bb-weekly-sample-badge">샘플</span>}
+          </div>
+          <div className="bb-daily-desc">
+            {data.date && <>{data.date} </>}
+            {typeof data.articleCount === 'number' && <>· 오늘 뉴스 {data.articleCount}건 분석 </>}
+            · AI 자동 생성
+          </div>
+        </div>
+      </div>
+
+      <DailyKeywords keywords={data.keywords} />
+      <DailyCategorySummaries summaries={data.categorySummaries} />
+      <DailyReportAgenda items={data.reportAgenda} />
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ 홈 화면 섹션 헤더 ━━━━━━━━━━
+function HomeSectionHeader({ title, desc }) {
+  return (
+    <div className="bb-home-section-header">
+      <div className="bb-home-section-title">{title}</div>
+      {desc && <div className="bb-home-section-desc">{desc}</div>}
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ 홈 화면 섹션 1: 오늘의 배터리 브리핑 (+ 지난 주요 주제) ━━━━━━━━━━
+function DailySection({ data, weeklyInsightHistory }) {
+  if (!data) return null;
+  return (
+    <div className="bb-home-section">
+      <HomeSectionHeader title="오늘의 배터리 브리핑" desc="오늘의 키워드 · 카테고리별 동향 · 보고안건" />
+      <DailyInsight data={data} />
+      <TopicArchive history={weeklyInsightHistory} />
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ 홈 화면 섹션 2: 뉴스 섹터 ━━━━━━━━━━
+function NewsSector({ news, featured, onCatClick }) {
+  return (
+    <div className="bb-home-section">
+      <HomeSectionHeader title="뉴스 섹터" desc="카테고리별 최신 뉴스" />
+      {featured.length > 0 && <ConcernsBanner featured={featured} />}
+      <HomeView news={news} onCatClick={onCatClick} />
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ 홈 화면 섹션 3: 공시 섹터 (요약 미리보기) ━━━━━━━━━━
+function FilingsSector({ dartFinancials, dartFilings, onViewAll }) {
+  if (!dartFinancials && !dartFilings) return null;
+  return (
+    <div className="bb-home-section">
+      <HomeSectionHeader title="공시 섹터" desc="분기 실적 요약 · 최근 공시" />
+      <QuarterlyFinancials data={dartFinancials} />
+      <div className="bb-filings-viewall" onClick={onViewAll}>
+        전체 공시·특허 페이지 보기 <ChevronRight size={14} />
+      </div>
     </div>
   );
 }
@@ -1016,6 +1231,113 @@ function FilingsCardGrid({ companies }) {
   );
 }
 
+// ━━━━━━━━━━ 분기 실적 요약 (매출·영업이익) ━━━━━━━━━━
+function formatEokAmount(raw) {
+  if (raw === undefined || raw === null) return null;
+  const n = Number(String(raw).replace(/,/g, ''));
+  if (!isFinite(n)) return null;
+  const eok = n / 100000000; // 원 -> 억원
+  return `${eok.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}억원`;
+}
+
+function formatYoyChange(current, prev) {
+  const c = Number(String(current).replace(/,/g, ''));
+  const p = Number(String(prev).replace(/,/g, ''));
+  if (!isFinite(c) || !isFinite(p) || p === 0) return null;
+  const pct = ((c - p) / Math.abs(p)) * 100;
+  const sign = pct > 0 ? '+' : '';
+  return `전년동기比 ${sign}${pct.toFixed(1)}%`;
+}
+
+function FinancialRow({ label, item }) {
+  if (!item) return null;
+  const amount = formatEokAmount(item.current);
+  const yoy = formatYoyChange(item.current, item.prev);
+  if (!amount) return null;
+  const curNum = Number(String(item.current).replace(/,/g, ''));
+  const prevNum = Number(String(item.prev).replace(/,/g, ''));
+  const isDown = isFinite(curNum) && isFinite(prevNum) && curNum < prevNum;
+  return (
+    <div className="bb-financial-row">
+      <span className="bb-financial-row-label">{label}</span>
+      <span className="bb-financial-row-value">{amount}</span>
+      {yoy && <span className={`bb-financial-row-yoy ${isDown ? 'down' : 'up'}`}>{yoy}</span>}
+    </div>
+  );
+}
+
+function FinancialTrend({ trend }) {
+  if (!trend || trend.length === 0) return null;
+  const revNums = trend.map(t => {
+    const n = Number(String(t.revenue || '').replace(/,/g, ''));
+    return isFinite(n) ? n : 0;
+  });
+  const maxRev = Math.max(...revNums, 1);
+  return (
+    <div className="bb-financial-trend">
+      <div className="bb-financial-trend-label">매출 추이</div>
+      <div className="bb-financial-trend-bars">
+        {trend.map((t, idx) => {
+          const ratio = revNums[idx] / maxRev;
+          const eok = formatEokAmount(t.revenue);
+          return (
+            <div className="bb-financial-trend-bar-col" key={idx}>
+              <div className="bb-financial-trend-bar-track">
+                <div
+                  className="bb-financial-trend-bar-fill"
+                  style={{ height: `${Math.max(ratio * 100, 4)}%` }}
+                  title={eok || ''}
+                />
+              </div>
+              <div className="bb-financial-trend-bar-amount">{eok || '-'}</div>
+              <div className="bb-financial-trend-bar-period">{t.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FinancialCard({ company }) {
+  const f = company.financials;
+  return (
+    <div className="bb-financial-card">
+      <div className="bb-financial-card-label">{company.label}</div>
+      {!f ? (
+        <div className="bb-filings-empty">실적 데이터 없음</div>
+      ) : (
+        <>
+          <div className="bb-financial-card-report">{f.reportLabel} ({f.bsnsYear})</div>
+          <div className="bb-financial-rows">
+            <FinancialRow label="매출액" item={f.revenue} />
+            <FinancialRow label="영업이익" item={f.operatingProfit} />
+            <FinancialRow label="당기순이익" item={f.netProfit} />
+          </div>
+          <FinancialTrend trend={company.trend} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function QuarterlyFinancials({ data }) {
+  if (!data || !data.companies || data.companies.length === 0) return null;
+  return (
+    <div className="bb-financials">
+      <div className="bb-financials-header">
+        <div className="bb-financials-title">
+          <TrendingUp size={15} /> 분기 실적 요약 (매출·영업이익)
+          {data.isSample && <span className="bb-weekly-sample-badge">샘플</span>}
+        </div>
+      </div>
+      <div className="bb-financials-grid">
+        {data.companies.map(c => <FinancialCard key={c.id} company={c} />)}
+      </div>
+    </div>
+  );
+}
+
 function DartFilings({ data }) {
   if (!data || !data.companies || data.companies.length === 0) return null;
   const { isSample, companies } = data;
@@ -1069,7 +1391,7 @@ function PatentSignals({ patents }) {
 }
 
 // ━━━━━━━━━━ 특허·공시 페이지 ━━━━━━━━━━
-function FilingsView({ dartFilings }) {
+function FilingsView({ dartFilings, dartFinancials }) {
   return (
     <>
       <div className="bb-page-header">
@@ -1087,6 +1409,7 @@ function FilingsView({ dartFilings }) {
         </div>
       </div>
 
+      <QuarterlyFinancials data={dartFinancials} />
       <DartFilings data={dartFilings} />
       <PatentSignals patents={null} />
     </>
@@ -1828,6 +2151,35 @@ const globalStyles = `
   .bb-report-menu-item:hover { background: var(--bg); }
   .bb-report-error { position: absolute; top: calc(100% + 6px); right: 0; font-size: 12px; color: #C0392B; white-space: nowrap; }
 
+  /* ━━━ 분기 실적 요약 ━━━ */
+  .bb-financials {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+  }
+  .bb-financials-header { margin-bottom: 14px; }
+  .bb-financials-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .bb-financials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .bb-financial-card { border: 1px solid var(--line-light); border-radius: 8px; padding: 14px 16px; }
+  .bb-financial-card-label { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .bb-financial-card-report { font-size: 11.5px; color: var(--ink-faint); margin-bottom: 10px; }
+  .bb-financial-rows { display: flex; flex-direction: column; gap: 8px; }
+  .bb-financial-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .bb-financial-row-label { font-size: 12.5px; color: var(--ink-mute); min-width: 60px; flex-shrink: 0; }
+  .bb-financial-row-value { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .bb-financial-row-yoy { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
+  .bb-financial-row-yoy.up { color: #1F7A4C; background: #E7F6EE; }
+  .bb-financial-row-yoy.down { color: #C0392B; background: #FDEDEB; }
+
   /* ━━━ DART 공시 ━━━ */
   .bb-filings {
     background: #fff;
@@ -1959,6 +2311,97 @@ const globalStyles = `
     margin: 0;
   }
 
+  /* ━━━ 오늘의 배터리 산업 브리핑 (첫 페이지, 일간) ━━━ */
+  .bb-daily {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--primary);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+  }
+  .bb-daily-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .bb-daily-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--primary-bg);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .bb-daily-title { font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .bb-daily-desc { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
+  .bb-daily-keywords { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .bb-daily-keyword-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    padding: 7px 13px;
+    border-radius: 20px;
+  }
+  .bb-daily-keyword-chip em {
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--primary);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  /* ━━━ 카테고리별 오늘의 동향 ━━━ */
+  .bb-daily-catsum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .bb-daily-catsum-card { background: var(--bg); border-radius: 8px; padding: 12px 14px; }
+  .bb-daily-catsum-label { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+  .bb-daily-catsum-text { font-size: 13px; color: var(--ink-mute); line-height: 1.55; }
+
+  /* ━━━ 오늘의 보고안건 ━━━ */
+  .bb-daily-agenda { border-top: 1px dashed var(--line); padding-top: 14px; }
+  .bb-daily-agenda-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+  .bb-daily-agenda-list { display: flex; flex-direction: column; gap: 8px; }
+  .bb-daily-agenda-item { background: #FFF8EC; border-left: 3px solid #E0A426; border-radius: 4px; padding: 9px 13px; }
+  .bb-daily-agenda-item-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+  .bb-daily-agenda-item-reason { font-size: 12px; color: var(--ink-faint); line-height: 1.5; }
+
+  /* ━━━ 홈 화면 섹션 ━━━ */
+  .bb-home-section { margin-bottom: 34px; }
+  .bb-home-section-header { margin-bottom: 14px; }
+  .bb-home-section-title { font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .bb-home-section-desc { font-size: 12.5px; color: var(--ink-faint); margin-top: 3px; }
+
+  /* ━━━ 분기 실적 추이 (미니 바 차트) ━━━ */
+  .bb-financial-trend { border-top: 1px dashed var(--line); margin-top: 12px; padding-top: 12px; }
+  .bb-financial-trend-label { font-size: 11.5px; color: var(--ink-faint); margin-bottom: 8px; }
+  .bb-financial-trend-bars { display: flex; align-items: flex-end; gap: 8px; height: 70px; }
+  .bb-financial-trend-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .bb-financial-trend-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+  .bb-financial-trend-bar-fill { width: 100%; background: var(--primary); border-radius: 3px 3px 0 0; min-height: 3px; }
+  .bb-financial-trend-bar-amount { font-size: 10.5px; font-weight: 700; color: var(--ink); margin-top: 5px; white-space: nowrap; }
+  .bb-financial-trend-bar-period { font-size: 9.5px; color: var(--ink-faint); margin-top: 2px; white-space: nowrap; }
+
+  /* ━━━ 공시 섹터 전체보기 링크 ━━━ */
+  .bb-filings-viewall {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .bb-filings-viewall:hover { text-decoration: underline; }
+
   /* ━━━ Concerns Banner ━━━ */
   .bb-concerns { background: linear-gradient(135deg, #1F5F9E 0%, #2C7DC4 100%); color: #fff; border-radius: 4px; padding: 22px 26px; margin-bottom: 22px; display: flex; gap: 24px; align-items: center; position: relative; overflow: hidden; flex-wrap: wrap; }
   .bb-concerns::before { content: ''; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
@@ -2061,6 +2504,9 @@ const globalStyles = `
     .bb-cat-grid { grid-template-columns: 1fr; }
     .bb-compare-grid { grid-template-columns: 1fr; }
     .bb-filings-grid { grid-template-columns: 1fr; }
+    .bb-financials-grid { grid-template-columns: 1fr; }
+    .bb-daily-catsum-grid { grid-template-columns: 1fr; }
+    .bb-financial-trend-bars { height: 56px; }
     .bb-theme-grid { grid-template-columns: 1fr; }
     .bb-heatmap-grid { grid-template-columns: 1fr; }
   }
