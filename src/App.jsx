@@ -47,20 +47,28 @@ const SAMPLE_DAILY_INSIGHT = {
   date: '2026-07-21',
   articleCount: 18,
   keywords: [
-    { keyword: 'FEOC 규제', count: 4, headline: '美 상무부, FEOC 세부 시행지침 초안 공개' },
-    { keyword: 'ESS 성장', count: 3, headline: 'LGES, AI데이터센터向 ESS 수주 확대 발표' },
-    { keyword: '리튬 가격', count: 3, headline: '리튬 현물가, 3주 연속 반등세' },
-    { keyword: '46파이 배터리', count: 2, headline: '테슬라 46파이 라인 수율 개선 소식' },
-    { keyword: '전고체 전지', count: 2, headline: '도요타, 전고체 전지 양산 일정 재확인' },
+    { keyword: 'FEOC 규제', count: 4, headline: '美 상무부, FEOC 세부 시행지침 초안 공개', link: 'https://example.com/news/feoc-guideline' },
+    { keyword: 'ESS 성장', count: 3, headline: 'LGES, AI데이터센터向 ESS 수주 확대 발표', link: 'https://example.com/news/lges-ess' },
+    { keyword: '리튬 가격', count: 3, headline: '리튬 현물가, 3주 연속 반등세', link: 'https://example.com/news/lithium-price' },
+    { keyword: '46파이 배터리', count: 2, headline: '테슬라 46파이 라인 수율 개선 소식', link: 'https://example.com/news/tesla-4680' },
+    { keyword: '전고체 전지', count: 2, headline: '도요타, 전고체 전지 양산 일정 재확인', link: 'https://example.com/news/toyota-solid-state' },
   ],
   categorySummaries: [
-    { cat: 'policy', summary: '美 FEOC 규제 후속 세부지침 관련 보도가 이어지며 비중국 공급망 반사이익 기대가 커지고 있다.' },
-    { cat: 'competitor', summary: 'CATL·LGES가 ESS向 수주 확대 소식을 발표했고, 중국 업체들의 LFP 증설 소식도 이어졌다.' },
-    { cat: 'customer', summary: 'TTI·Bosch 등 전동공구 고객사의 하반기 물량 계획 관련 기사가 있었다.' },
+    { cat: 'policy', points: [
+      '美 상무부가 FEOC(해외우려기업) 세부 시행지침 초안을 공개하면서 배터리·소재 원산지 추적 요건이 예상보다 까다로워질 수 있다는 우려가 제기됐다.',
+      '비중국 공급망을 갖춘 업체들의 반사이익 기대가 커지는 분위기지만, 시행 세칙 확정까지는 시간이 걸릴 수 있어 추가 공청회·의견수렴 일정을 계속 지켜볼 필요가 있다.',
+    ] },
+    { cat: 'competitor', points: [
+      'CATL과 LGES가 나란히 ESS向 대형 수주 확대 소식을 발표하며 데이터센터發 전력 저장 수요를 선점하려는 움직임을 보였다.',
+      '동시에 중국 업체들의 LFP 생산라인 증설 소식도 이어지면서 중저가 시장 공급 과잉 우려가 함께 제기된다.',
+    ] },
+    { cat: 'customer', points: [
+      'TTI·Bosch 등 주요 전동공구 고객사들이 하반기 물량 계획을 구체화하는 기사가 다수 나왔다. 재고 조정이 어느 정도 마무리되며 발주가 정상화되는 신호로 해석할 수 있다.',
+    ] },
   ],
   reportAgenda: [
-    { title: 'FEOC 규제 후속지침에 따른 비중국 공급망 영향 점검', reason: '오늘 관련 기사가 다수 보도되어 사업부 차원의 대응 방향 검토가 필요함' },
-    { title: 'ESS向 경쟁사 수주 확대 동향 공유', reason: 'CATL·LGES 수주 소식이 소형전지 파생 수요 판단에 참고가 될 수 있음' },
+    { title: 'FEOC 규제 후속지침에 따른 비중국 공급망 영향 점검', reason: '오늘 세부 시행지침 초안 관련 기사가 다수 보도되어 원산지 추적 요건이 소형전지 공급망에 미치는 영향을 사업부 차원에서 조기에 점검할 필요가 있다. 시행 세칙이 확정되기 전에 대응 시나리오를 준비해두면 규제 확정 이후 대응 속도를 높일 수 있다.' },
+    { title: 'ESS向 경쟁사 수주 확대 동향 공유', reason: 'CATL·LGES의 ESS 수주 확대 소식은 소형전지와 직접 경합하지는 않지만, 두 회사의 생산능력 배분 전략 변화를 보여주는 신호다. 파생 수요 및 라인 우선순위 변화 가능성을 유관부서와 공유해 중장기 대응 방향을 함께 논의할 필요가 있다.' },
   ],
 };
 
@@ -608,20 +616,42 @@ function DailyStatBar({ data }) {
 }
 
 function DailyKeywordsList({ keywords }) {
+  const [openIdx, setOpenIdx] = useState(null);
   if (!keywords || keywords.length === 0) return null;
   return (
-    <div className="bb-daily-block">
-      <div className="bb-daily-block-title">주요 키워드</div>
-      <div className="bb-daily-keyword-list">
-        {keywords.map((k, idx) => (
-          <div className="bb-daily-keyword-row" key={idx}>
-            <div className="bb-daily-keyword-name">
-              {k.keyword}
-              {typeof k.count === 'number' && <span className="bb-daily-keyword-count">{k.count}</span>}
+    <div className="bb-daily">
+      <div className="bb-daily-block-title"><Hash size={17} /> 주요 키워드</div>
+      <div className="bb-daily-keyword-cloud">
+        {keywords.map((k, idx) => {
+          const isOpen = openIdx === idx;
+          return (
+            <div className="bb-daily-keyword-chip-wrap" key={idx}>
+              <button
+                type="button"
+                className={`bb-daily-keyword-chip ${isOpen ? 'active' : ''}`}
+                onClick={() => setOpenIdx(isOpen ? null : idx)}
+              >
+                {k.keyword}
+                {typeof k.count === 'number' && <span className="bb-daily-keyword-chip-count">{k.count}</span>}
+              </button>
+              {isOpen && k.headline && (
+                k.link ? (
+                  <a
+                    href={k.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bb-daily-keyword-popover bb-daily-keyword-popover-link"
+                  >
+                    {k.headline}
+                    <span className="bb-daily-keyword-popover-cta">기사 보러가기 <ExternalLink size={11} /></span>
+                  </a>
+                ) : (
+                  <div className="bb-daily-keyword-popover">{k.headline}</div>
+                )
+              )}
             </div>
-            {k.headline && <div className="bb-daily-keyword-headline">{k.headline}</div>}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -630,15 +660,22 @@ function DailyKeywordsList({ keywords }) {
 function DailyCategoryRows({ summaries }) {
   if (!summaries || summaries.length === 0) return null;
   return (
-    <div className="bb-daily-block">
-      <div className="bb-daily-block-title">카테고리별 동향</div>
+    <div className="bb-daily">
+      <div className="bb-daily-block-title"><TrendingUp size={17} /> 카테고리별 동향</div>
       <div className="bb-daily-catrow-list">
         {summaries.map((s, idx) => {
           const cat = CATEGORIES.find(c => c.id === s.cat);
+          const points = Array.isArray(s.points) && s.points.length > 0 ? s.points : (s.summary ? [s.summary] : []);
           return (
-            <div className={`bb-daily-catrow bb-daily-catrow-${s.cat}`} key={idx}>
+            <div className="bb-daily-catrow" key={idx}>
               <div className="bb-daily-catrow-label">{cat ? cat.label : s.cat}</div>
-              <div className="bb-daily-catrow-text">{s.summary}</div>
+              {points.length > 1 ? (
+                <ol className="bb-daily-catrow-points">
+                  {points.map((p, pIdx) => <li key={pIdx}>{p}</li>)}
+                </ol>
+              ) : (
+                <div className="bb-daily-catrow-text">{points[0]}</div>
+              )}
             </div>
           );
         })}
@@ -650,8 +687,8 @@ function DailyCategoryRows({ summaries }) {
 function DailyReportAgenda({ items }) {
   if (!items || items.length === 0) return null;
   return (
-    <div className="bb-daily-agenda">
-      <div className="bb-daily-agenda-title"><Target size={14} /> 기획그룹 보고안건</div>
+    <div className="bb-daily">
+      <div className="bb-daily-agenda-title"><FileText size={17} /> 기획그룹 보고안건</div>
       <div className="bb-daily-agenda-list">
         {items.map((item, idx) => (
           <div className="bb-daily-agenda-item" key={idx}>
@@ -692,11 +729,9 @@ function DailyView({ data, weeklyInsightHistory }) {
 
       <DailyStatBar data={data} />
 
-      <div className="bb-daily">
-        <DailyKeywordsList keywords={data.keywords} />
-        <DailyCategoryRows summaries={data.categorySummaries} />
-        <DailyReportAgenda items={data.reportAgenda} />
-      </div>
+      <DailyKeywordsList keywords={data.keywords} />
+      <DailyCategoryRows summaries={data.categorySummaries} />
+      <DailyReportAgenda items={data.reportAgenda} />
 
       <TopicArchive history={weeklyInsightHistory} />
     </div>
@@ -1516,7 +1551,7 @@ const FINREPORT_COMPANY_META = {
 };
 
 function FinReportBarRow({ row }) {
-  const companyIds = Object.keys(row).filter(k => k !== 'metric');
+  const companyIds = Object.keys(row).filter(k => k !== 'metric' && k !== 'unit');
   const maxAbs = Math.max(1, ...companyIds.map(id => Math.abs(row[id] || 0)));
   return (
     <div className="bb-finreport-bar-row">
@@ -1864,8 +1899,9 @@ const globalStyles = `
   .bb-total-count { font-size: 13px; color: var(--ink-mute); background: var(--bg); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
 
   /* ━━━ Layout (사이드바 + 콘텐츠) ━━━ */
-  /* 여백 없이 화면 전체 폭을 채우도록 max-width 제거 (넓은 모니터에서 좌우 빈 공간 방지) */
-  .bb-layout { display: flex; width: 100%; align-items: flex-start; }
+  /* 완전히 꽉 채우면 넓은 모니터에서 표/그래프가 지나치게 길어지므로,
+     적당한 최대폭을 두고 좌우 여백만 살짝 주는 방식으로 가운데 정렬한다. */
+  .bb-layout { display: flex; width: 100%; max-width: 1600px; margin: 0 auto; align-items: flex-start; }
   .bb-sidebar {
     width: 220px;
     flex-shrink: 0;
@@ -2632,29 +2668,87 @@ const globalStyles = `
   }
   .bb-daily-block { margin-bottom: 20px; }
   .bb-daily-block:last-child { margin-bottom: 0; }
-  .bb-daily-block-title { font-size: 13.5px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+  .bb-daily-block-title { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
+  .bb-daily-block-title svg { color: var(--primary); flex-shrink: 0; }
 
-  .bb-daily-keyword-list { display: flex; flex-direction: column; gap: 8px; }
-  .bb-daily-keyword-row { background: var(--bg); border-radius: 6px; padding: 10px 14px; }
-  .bb-daily-keyword-name { font-size: 13.5px; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: 8px; }
-  .bb-daily-keyword-count {
-    font-size: 11px;
+  .bb-daily-keyword-cloud { display: flex; flex-wrap: wrap; gap: 12px; }
+  .bb-daily-keyword-chip-wrap { position: relative; }
+  .bb-daily-keyword-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--primary-bg);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 24px;
+    padding: 12px 20px;
+    font-family: inherit;
+    font-size: 17px;
     font-weight: 700;
-    color: #fff;
-    background: var(--primary);
-    padding: 1px 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .bb-daily-keyword-chip:hover { background: #d9ecfa; }
+  .bb-daily-keyword-chip.active { background: var(--primary); color: #fff; }
+  .bb-daily-keyword-chip-count {
+    font-size: 13px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.6);
+    color: var(--primary-dark);
+    padding: 2px 10px;
     border-radius: 10px;
   }
-  .bb-daily-keyword-headline { font-size: 12.5px; color: var(--ink-mute); margin-top: 4px; line-height: 1.5; }
+  .bb-daily-keyword-chip.active .bb-daily-keyword-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+  .bb-daily-keyword-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 5;
+    min-width: 240px;
+    max-width: 320px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    color: var(--ink-mute);
+    line-height: 1.55;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    display: block;
+  }
+  .bb-daily-keyword-popover-link { cursor: pointer; }
+  .bb-daily-keyword-popover-link:hover { border-color: var(--primary); color: var(--primary-dark); }
+  .bb-daily-keyword-popover-cta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+  }
 
   .bb-daily-catrow-list { display: flex; flex-direction: column; gap: 10px; }
   .bb-daily-catrow { background: var(--bg); border-radius: 8px; padding: 12px 14px; }
-  .bb-daily-catrow-label { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+  .bb-daily-catrow-label {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    background: var(--primary-bg);
+    padding: 3px 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
   .bb-daily-catrow-text { font-size: 13px; color: var(--ink-mute); line-height: 1.55; }
+  .bb-daily-catrow-points { margin: 0; padding-left: 20px; font-size: 13px; color: var(--ink-mute); line-height: 1.6; }
+  .bb-daily-catrow-points li { margin-bottom: 4px; }
+  .bb-daily-catrow-points li:last-child { margin-bottom: 0; }
 
   /* ━━━ 오늘의 보고안건 ━━━ */
   .bb-daily-agenda { border-top: 1px dashed var(--line); padding-top: 14px; }
-  .bb-daily-agenda-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+  .bb-daily-agenda-title { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
+  .bb-daily-agenda-title svg { color: var(--primary); flex-shrink: 0; }
   .bb-daily-agenda-list { display: flex; flex-direction: column; gap: 8px; }
   .bb-daily-agenda-item { display: flex; align-items: flex-start; gap: 12px; background: #FFF8EC; border-left: 3px solid #E0A426; border-radius: 4px; padding: 11px 15px; }
   .bb-daily-agenda-num {
