@@ -2584,6 +2584,44 @@ const globalStyles = `
   }
 
   /* ━━━ 오늘의 배터리 산업 브리핑 (첫 페이지, 일간) ━━━ */
+  .bb-daily-page-header { margin-bottom: 18px; }
+  .bb-daily-page-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .bb-daily-page-desc { font-size: 12.5px; color: var(--ink-faint); margin-top: 4px; }
+
+  .bb-daily-empty {
+    background: #fff;
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink-faint);
+    font-size: 13.5px;
+  }
+
+  .bb-daily-statbar { display: flex; gap: 12px; margin-bottom: 22px; }
+  .bb-daily-stat {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+  }
+  .bb-daily-stat-agenda { border-top: 3px solid var(--primary); }
+  .bb-daily-stat-value { font-size: 24px; font-weight: 700; color: var(--primary-dark); line-height: 1.2; }
+  .bb-daily-stat-label { font-size: 12px; color: var(--ink-faint); margin-top: 4px; }
+
   .bb-daily {
     background: #fff;
     border: 1px solid var(--line);
@@ -2592,56 +2630,46 @@ const globalStyles = `
     padding: 20px 24px;
     margin-bottom: 22px;
   }
-  .bb-daily-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .bb-daily-icon {
-    width: 38px;
-    height: 38px;
-    background: var(--primary-bg);
-    border-radius: 9px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .bb-daily-title { font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
-  .bb-daily-desc { font-size: 12.5px; color: var(--ink-faint); margin-top: 2px; }
-  .bb-daily-keywords { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-  .bb-daily-keyword-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--primary-dark);
-    padding: 7px 13px;
-    border-radius: 20px;
-  }
-  .bb-daily-keyword-chip em {
-    font-style: normal;
+  .bb-daily-block { margin-bottom: 20px; }
+  .bb-daily-block:last-child { margin-bottom: 0; }
+  .bb-daily-block-title { font-size: 13.5px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+
+  .bb-daily-keyword-list { display: flex; flex-direction: column; gap: 8px; }
+  .bb-daily-keyword-row { background: var(--bg); border-radius: 6px; padding: 10px 14px; }
+  .bb-daily-keyword-name { font-size: 13.5px; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: 8px; }
+  .bb-daily-keyword-count {
     font-size: 11px;
     font-weight: 700;
     color: #fff;
     background: var(--primary);
-    padding: 1px 7px;
+    padding: 1px 8px;
     border-radius: 10px;
   }
+  .bb-daily-keyword-headline { font-size: 12.5px; color: var(--ink-mute); margin-top: 4px; line-height: 1.5; }
 
-  /* ━━━ 카테고리별 오늘의 동향 ━━━ */
-  .bb-daily-catsum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .bb-daily-catsum-card { background: var(--bg); border-radius: 8px; padding: 12px 14px; }
-  .bb-daily-catsum-label { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
-  .bb-daily-catsum-text { font-size: 13px; color: var(--ink-mute); line-height: 1.55; }
+  .bb-daily-catrow-list { display: flex; flex-direction: column; gap: 10px; }
+  .bb-daily-catrow { background: var(--bg); border-radius: 8px; padding: 12px 14px; }
+  .bb-daily-catrow-label { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+  .bb-daily-catrow-text { font-size: 13px; color: var(--ink-mute); line-height: 1.55; }
 
   /* ━━━ 오늘의 보고안건 ━━━ */
   .bb-daily-agenda { border-top: 1px dashed var(--line); padding-top: 14px; }
   .bb-daily-agenda-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
   .bb-daily-agenda-list { display: flex; flex-direction: column; gap: 8px; }
-  .bb-daily-agenda-item { background: #FFF8EC; border-left: 3px solid #E0A426; border-radius: 4px; padding: 9px 13px; }
+  .bb-daily-agenda-item { display: flex; align-items: flex-start; gap: 12px; background: #FFF8EC; border-left: 3px solid #E0A426; border-radius: 4px; padding: 11px 15px; }
+  .bb-daily-agenda-num {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #E0A426;
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   .bb-daily-agenda-item-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
   .bb-daily-agenda-item-reason { font-size: 12px; color: var(--ink-faint); line-height: 1.5; }
 
