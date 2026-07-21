@@ -16,6 +16,7 @@ const CACHE_PATH = path.join('scripts', 'ai-cache.json');
 const FIRST_SEEN_CACHE_PATH = path.join('scripts', 'first-seen-cache.json');
 const HISTORY_PATH = path.join('scripts', 'weekly-insight-history.json');
 const DART_CORP_CACHE_PATH = path.join('scripts', 'dart-corp-codes.json');
+const DAILY_INSIGHT_CACHE_PATH = path.join('scripts', 'daily-insight-cache.json');
 const MAX_NEW_SUMMARIES_PER_RUN = 80; // 1회 실행 시 최대 신규 요약 개수 (rate limit 보호)
 const MAX_HISTORY_WEEKS = 8; // 발굴주제 아카이브 보관 주 수
 
@@ -618,6 +619,114 @@ async function buildWeeklyInsight(allNews, firstSeenCache) {
   }
 }
 
+// ━━━━━━━━━━━━━━━━ 일간 인사이트 생성 (오늘의 키워드/이슈요약) ━━━━━━━━━━━━━━━━
+// 첫 페이지에 표시할 "오늘의" 콘텐츠. 주간 인사이트와 별개로 매일 새로 생성한다.
+
+function buildDailyInsightPrompt(articles) {
+  const listText = articles
+    .slice(0, 40)
+    .map((a, i) => `${i + 1}. [${CAT_LABEL[a.cat] || a.cat}] ${a.title} — ${(a.summary || '').slice(0, 60)}`)
+    .join('\n');
+
+  return `당신은 배터리 산업 전문 애널리스트입니다. 아래는 오늘 새로 수집된 배터리 산업 관련 뉴스 목록입니다 (카테고리: 정책, 경쟁사, 고객사, 자사).
+
+이 뉴스들을 분석해서 다음 항목을 도출해주세요.
+
+1. keywords: 오늘 뉴스에서 반복적으로 등장하거나 중요하게 다뤄진 핵심 키워드 5개 (중요도·언급 빈도 순)
+2. categorySummaries: 오늘 새 기사가 있었던 카테고리(정책/경쟁사/고객사/자사)별로 핵심 동향을 1~2문장씩 요약. 오늘 해당 카테고리에 뉴스가 없으면 그 카테고리는 제외하세요. cat 필드는 반드시 policy/competitor/customer/own 중 하나만 사용하세요.
+3. reportAgenda: 오늘 뉴스 흐름 중 삼성SDI 소형전지 기획그룹이 임원 또는 유관부서에 보고할 만큼 중요한 안건 1~3개 (없으면 빈 배열). 각각 title(안건 제목)과 reason(왜 보고할 만한지 1문장)을 포함하세요.
+
+반드시 아래 JSON 형식으로만 답변하세요. 다른 설명이나 마크다운 코드블록 없이 순수 JSON 텍스트만 출력하세요.
+
+{
+  "keywords": [{"keyword": "string", "count": number}],
+  "categorySummaries": [{"cat": "policy 또는 competitor 또는 customer 또는 own", "summary": "string"}],
+  "reportAgenda": [{"title": "string", "reason": "string"}]
+}
+
+뉴스 목록:
+${listText}`;
+}
+
+async function generateDailyInsight(pool, date) {
+  const prompt = buildDailyInsightPrompt(pool);
+
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const result = await callGeminiJSON(prompt, { temperature: 0.4, maxOutputTokens: 1500 });
+      if (
+        !Array.isArray(result.keywords) ||
+        !Array.isArray(result.categorySummaries) ||
+        !Array.isArray(result.reportAgenda)
+      ) {
+        throw new Error('응답 형식이 예상과 다름 (keywords/categorySummaries/reportAgenda 배열 필요)');
+      }
+      return {
+        date,
+        generatedAt: new Date().toISOString(),
+        articleCount: pool.length,
+        keywords: result.keywords,
+        categorySummaries: result.categorySummaries,
+        reportAgenda: result.reportAgenda,
+      };
+    } catch (e) {
+      lastError = e;
+      console.warn(`  ✗ 일간 인사이트 시도 ${attempt}/3 실패: ${e.message}`);
+      if (attempt < 3) {
+        await sleep(6000 * attempt);
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function buildDailyInsight(allNews, firstSeenCache) {
+  const today = todayKST();
+  const cached = loadJsonCache(DAILY_INSIGHT_CACHE_PATH, null);
+
+  // 스키마가 바뀐 뒤 남아있는 예전 캐시(categorySummaries/reportAgenda 없음)는 걸러내고 다시 생성한다.
+  const hasCurrentSchema = cached
+    && Array.isArray(cached.categorySummaries)
+    && Array.isArray(cached.reportAgenda);
+
+  if (cached && cached.date === today && hasCurrentSchema) {
+    console.log(`\n📌 일간 인사이트: 오늘(${today}) 캐시 재사용`);
+    return cached;
+  }
+
+  if (!GEMINI_API_KEY) {
+    console.warn('\n⚠ GEMINI_API_KEY 없음. 일간 인사이트는 이전 캐시를 유지합니다.');
+    return cached;
+  }
+
+  let pool = allNews.filter(a => (firstSeenCache[cacheKey(a)] || today) === today);
+
+  // 오늘 신규 기사가 너무 적으면(주말 등) 최근 2일로 범위 확대
+  if (pool.length < 3) {
+    const yesterday = addDaysToDateString(today, -1);
+    console.log(`  ℹ 오늘 신규 기사 ${pool.length}건 - 최근 2일로 범위 확대`);
+    pool = allNews.filter(a => (firstSeenCache[cacheKey(a)] || today) >= yesterday);
+  }
+
+  if (pool.length < 2) {
+    console.warn(`\n⚠ 일간 인사이트: 분석할 기사가 부족함(${pool.length}건). 이전 캐시 유지.`);
+    return cached;
+  }
+
+  try {
+    console.log(`\n🧠 일간 인사이트 생성 중... (분석 대상 ${pool.length}건)`);
+    await sleep(5000);
+    const insight = await generateDailyInsight(pool, today);
+    saveJsonCache(DAILY_INSIGHT_CACHE_PATH, insight);
+    console.log(`✓ 일간 인사이트 생성 완료: 키워드 ${insight.keywords.length}개`);
+    return insight;
+  } catch (e) {
+    console.warn(`⚠ 일간 인사이트 생성 실패: ${e.message} - 이전 캐시 유지`);
+    return cached;
+  }
+}
+
 // ━━━━━━━━━━━━━━━━ DART(전자공시) 자동 수집 ━━━━━━━━━━━━━━━━
 // 국내 상장사(삼성SDI/LG에너지솔루션/현대차)의 최근 2주 공시 목록을 가져온다.
 // corp_code는 DART의 corpCode.xml(zip)에서 회사명으로 찾아 1회만 조회 후 캐시한다.
@@ -693,13 +802,11 @@ function fmtDateCompact(d) {
   return d.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
-async function fetchDartFilings() {
+async function fetchDartFilings(corpCodeMap) {
   if (!DART_API_KEY) {
     console.warn('  ⚠ DART_API_KEY 없음 — 공시 수집 건너뜀 (opendart.fss.or.kr에서 무료 발급 가능)');
     return null;
   }
-
-  const corpCodeMap = await resolveDartCorpCodes();
 
   const end = new Date();
   const begin = new Date(end.getTime() - 14 * 24 * 3600 * 1000);
@@ -739,6 +846,142 @@ async function fetchDartFilings() {
   return { generatedAt: new Date().toISOString(), companies };
 }
 
+// ━━━━━━━━━━━━━━━━ DART 분기 실적(재무제표) 요약 ━━━━━━━━━━━━━━━━
+// 매출액/영업이익/당기순이익을 DART 재무제표 API에서 가져온다.
+// 공시 시점에 따라 아직 안 나온 분기도 있으므로, 최신 것부터 순서대로 시도한다.
+
+function getReportCandidates(today) {
+  const d = new Date(today + 'T00:00:00Z');
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + 1; // 1~12
+
+  const candidates = [];
+  if (month >= 11) {
+    candidates.push(['11014', String(year), '3분기보고서']);
+    candidates.push(['11012', String(year), '반기보고서']);
+  } else if (month >= 8) {
+    candidates.push(['11012', String(year), '반기보고서']);
+    candidates.push(['11013', String(year), '1분기보고서']);
+  } else if (month >= 5) {
+    candidates.push(['11013', String(year), '1분기보고서']);
+    candidates.push(['11011', String(year - 1), '사업보고서']);
+  } else {
+    candidates.push(['11011', String(year - 1), '사업보고서']);
+    candidates.push(['11014', String(year - 1), '3분기보고서']);
+  }
+  return candidates;
+}
+
+async function fetchCompanyFinancials(corpCode) {
+  const candidates = getReportCandidates(todayKST());
+  for (const [reprtCode, bsnsYear, label] of candidates) {
+    try {
+      const url = `https://opendart.fss.or.kr/api/fnlttSinglAcnt.json?crtfc_key=${DART_API_KEY}&corp_code=${corpCode}&bsns_year=${bsnsYear}&reprt_code=${reprtCode}`;
+      const json = await httpsGetJSON(url);
+      if (json.status === '000' && Array.isArray(json.list) && json.list.length > 0) {
+        const cfsRows = json.list.filter(r => r.fs_div === 'CFS'); // 연결재무제표 우선
+        const rows = cfsRows.length > 0 ? cfsRows : json.list;
+        const pick = (name) => rows.find(r => r.account_nm === name);
+        const revenue = pick('매출액');
+        const opProfit = pick('영업이익');
+        const netProfit = pick('당기순이익');
+        if (!revenue && !opProfit) {
+          await sleep(300);
+          continue; // 계정을 못 찾으면 다음 후보(이전 분기)로
+        }
+        return {
+          reportLabel: label,
+          bsnsYear,
+          revenue: revenue ? { current: revenue.thstrm_amount, prev: revenue.frmtrm_amount } : null,
+          operatingProfit: opProfit ? { current: opProfit.thstrm_amount, prev: opProfit.frmtrm_amount } : null,
+          netProfit: netProfit ? { current: netProfit.thstrm_amount, prev: netProfit.frmtrm_amount } : null,
+        };
+      }
+    } catch (e) {
+      // 이 후보 실패, 다음 후보로 넘어감
+    }
+    await sleep(300);
+  }
+  return null;
+}
+
+// 정기보고서는 연중 1분기(11013) → 반기(11012, 누적) → 3분기(11014, 누적) → 사업보고서(11011, 연간) 순.
+// 최근 N개 보고서의 매출/영업이익을 뒤로 거슬러 올라가며 모아 추이를 만든다.
+// 반기·3분기는 누적 수치라는 점을 라벨에 명시해 오해가 없도록 한다.
+const REPORT_SEQUENCE = ['11013', '11012', '11014', '11011'];
+const REPORT_LABEL_MAP = {
+  '11013': '1분기',
+  '11012': '반기(누적)',
+  '11014': '3분기(누적)',
+  '11011': '사업보고서(연간)',
+};
+
+function prevReportPeriod(reprtCode, year) {
+  const idx = REPORT_SEQUENCE.indexOf(reprtCode);
+  if (idx <= 0) return [REPORT_SEQUENCE[REPORT_SEQUENCE.length - 1], year - 1];
+  return [REPORT_SEQUENCE[idx - 1], year];
+}
+
+async function fetchCompanyFinancialTrend(corpCode, desiredCount = 4) {
+  const latest = getReportCandidates(todayKST())[0];
+  let reprtCode = latest[0];
+  let year = Number(latest[1]);
+
+  const results = [];
+  let guard = 0;
+  while (results.length < desiredCount && guard < 10) {
+    guard++;
+    try {
+      const url = `https://opendart.fss.or.kr/api/fnlttSinglAcnt.json?crtfc_key=${DART_API_KEY}&corp_code=${corpCode}&bsns_year=${year}&reprt_code=${reprtCode}`;
+      const json = await httpsGetJSON(url);
+      if (json.status === '000' && Array.isArray(json.list) && json.list.length > 0) {
+        const cfsRows = json.list.filter(r => r.fs_div === 'CFS');
+        const rows = cfsRows.length > 0 ? cfsRows : json.list;
+        const pick = (name) => rows.find(r => r.account_nm === name);
+        const revenue = pick('매출액');
+        const opProfit = pick('영업이익');
+        if (revenue || opProfit) {
+          results.push({
+            label: `${REPORT_LABEL_MAP[reprtCode]} ${year}`,
+            year,
+            reprtCode,
+            revenue: revenue ? revenue.thstrm_amount : null,
+            operatingProfit: opProfit ? opProfit.thstrm_amount : null,
+          });
+        }
+      }
+    } catch (e) {
+      // 이 시점 조회 실패, 계속 과거로 이동
+    }
+    [reprtCode, year] = prevReportPeriod(reprtCode, year);
+    await sleep(300);
+  }
+  return results.reverse(); // 오래된 것부터 최신 순으로
+}
+
+async function fetchDartFinancials(corpCodeMap) {
+  if (!DART_API_KEY) return null;
+
+  const companies = [];
+  for (const company of DART_COMPANIES) {
+    const corpCode = corpCodeMap[company.id];
+    if (!corpCode) {
+      companies.push({ id: company.id, label: company.label, type: company.type, financials: null, trend: [] });
+      continue;
+    }
+    try {
+      const financials = await fetchCompanyFinancials(corpCode);
+      const trend = await fetchCompanyFinancialTrend(corpCode, 4);
+      companies.push({ id: company.id, label: company.label, type: company.type, financials, trend });
+      console.log(`  ✓ ${company.label} 실적 조회: ${financials ? financials.reportLabel + ' (' + financials.bsnsYear + ')' : '데이터 없음'} · 추이 ${trend.length}개`);
+    } catch (e) {
+      console.warn(`  ✗ ${company.label} 실적 조회 오류: ${e.message}`);
+      companies.push({ id: company.id, label: company.label, type: company.type, financials: null, trend: [] });
+    }
+  }
+  return { generatedAt: new Date().toISOString(), companies };
+}
+
 // ━━━━━━━━━━━━━━━━ 메인 실행 ━━━━━━━━━━━━━━━━
 
 (async () => {
@@ -774,13 +1017,20 @@ async function fetchDartFilings() {
     const weeklyInsightHistory = await buildWeeklyInsight(allNews, firstSeenCache);
     const weeklyInsight = weeklyInsightHistory[0] || null;
 
-    // DART 공시 자동 수집 (국내 상장사: 삼성SDI/LG에너지솔루션/현대차)
+    // 일간 인사이트 (오늘의 키워드/이슈요약) - 매일 새로 생성, 첫 페이지에 노출
+    const dailyInsight = await buildDailyInsight(allNews, firstSeenCache);
+
+    // DART 공시 및 분기 실적 자동 수집 (국내 상장사: 삼성SDI/LG에너지솔루션/현대차)
     let dartFilings = null;
+    let dartFinancials = null;
     console.log('\n🏛️ DART 공시 수집 중...');
     try {
-      dartFilings = await fetchDartFilings();
+      const corpCodeMap = await resolveDartCorpCodes();
+      dartFilings = await fetchDartFilings(corpCodeMap);
+      console.log('\n💰 DART 분기 실적 수집 중...');
+      dartFinancials = await fetchDartFinancials(corpCodeMap);
     } catch (e) {
-      console.warn(`⚠ DART 공시 수집 실패: ${e.message}`);
+      console.warn(`⚠ DART 수집 실패: ${e.message}`);
     }
 
     const featured = allNews.filter(n => n.featured).slice(0, 4);
@@ -788,9 +1038,11 @@ async function fetchDartFilings() {
     const data = {
       news: allNews,
       featured: featured,
+      dailyInsight: dailyInsight,
       weeklyInsight: weeklyInsight,
       weeklyInsightHistory: weeklyInsightHistory,
       dartFilings: dartFilings,
+      dartFinancials: dartFinancials,
       lastUpdated: new Date().toLocaleString('ko-KR', {
         timeZone: 'Asia/Seoul',
         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -805,7 +1057,9 @@ async function fetchDartFilings() {
     console.log(`📰 뉴스: ${data.news.length}건`);
     console.log(`⭐ 필수: ${data.featured.length}건`);
     console.log(`🧠 주간 인사이트: ${weeklyInsight ? '있음 (' + weeklyInsight.weekStart + ')' : '없음'} · 아카이브 ${weeklyInsightHistory.length}주`);
+    console.log(`📌 일간 인사이트: ${dailyInsight ? '있음 (' + dailyInsight.date + ')' : '없음'}`);
     console.log(`🏛️ DART 공시: ${dartFilings ? dartFilings.companies.length + '개사' : '없음 (DART_API_KEY 미설정)'}`);
+    console.log(`💰 DART 분기 실적: ${dartFinancials ? dartFinancials.companies.length + '개사' : '없음'}`);
     console.log(`📁 저장: public/data.json`);
   } catch (e) {
     console.error('❌ Error:', e);
