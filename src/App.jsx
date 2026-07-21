@@ -47,11 +47,11 @@ const SAMPLE_DAILY_INSIGHT = {
   date: '2026-07-21',
   articleCount: 18,
   keywords: [
-    { keyword: 'FEOC 규제', count: 4 },
-    { keyword: 'ESS 성장', count: 3 },
-    { keyword: '리튬 가격', count: 3 },
-    { keyword: '46파이 배터리', count: 2 },
-    { keyword: '전고체 전지', count: 2 },
+    { keyword: 'FEOC 규제', count: 4, headline: '美 상무부, FEOC 세부 시행지침 초안 공개' },
+    { keyword: 'ESS 성장', count: 3, headline: 'LGES, AI데이터센터向 ESS 수주 확대 발표' },
+    { keyword: '리튬 가격', count: 3, headline: '리튬 현물가, 3주 연속 반등세' },
+    { keyword: '46파이 배터리', count: 2, headline: '테슬라 46파이 라인 수율 개선 소식' },
+    { keyword: '전고체 전지', count: 2, headline: '도요타, 전고체 전지 양산 일정 재확인' },
   ],
   categorySummaries: [
     { cat: 'policy', summary: '美 FEOC 규제 후속 세부지침 관련 보도가 이어지며 비중국 공급망 반사이익 기대가 커지고 있다.' },
@@ -235,35 +235,89 @@ const SAMPLE_DART_FINANCIALS = {
       id: 'sdi', label: '삼성SDI', type: 'battery',
       financials: {
         reportLabel: '1분기보고서', bsnsYear: '2026',
-        revenue: { current: '5123456789000', prev: '4890123456000' },
-        operatingProfit: { current: '123456789000', prev: '98765432000' },
-        netProfit: { current: '87654321000', prev: '65432109000' },
+        revenue: { current: '3576353183422', prev: '3176817731170' },
+        operatingProfit: { current: '-155580771739', prev: '-434068787207' },
+        netProfit: { current: '56110855928', prev: '-215955155323' },
       },
       trend: [
-        { label: '3분기(누적) 2025', revenue: '14200000000000', operatingProfit: '310000000000' },
-        { label: '사업보고서(연간) 2025', revenue: '19800000000000', operatingProfit: '420000000000' },
-        { label: '1분기 2026', revenue: '5123456789000', operatingProfit: '123456789000' },
+        { label: '3분기(누적) 2025', revenue: '10800000000000', operatingProfit: '-680000000000' },
+        { label: '사업보고서(연간) 2025', revenue: '14300000000000', operatingProfit: '-920000000000' },
+        { label: '1분기 2026', revenue: '3576353183422', operatingProfit: '-155580771739' },
       ],
+      profile: {
+        ceoName: '최주선', address: '경기도 용인시 기흥구 공세로 150-20',
+        homepageUrl: 'www.samsungsdi.co.kr', estDate: '19700120',
+      },
+      employees: { reportLabel: '사업보고서', bsnsYear: '2025', totalHeadcount: 12826, avgAnnualSalary: 94231873 },
+      summaryFinancials: {
+        bsnsYear: '2025', thstrmNm: '제 56 기', frmtrmNm: '제 55 기', bfefrmtrmNm: '제 54 기',
+        revenue: { thstrm: '13,266,730,679,499', frmtrm: '16,592,248,884,388', bfefrmtrm: '21,436,788,407,451' },
+        operatingProfit: { thstrm: '-1,722,360,788,760', frmtrm: '363,304,463,263', bfefrmtrm: '1,545,488,713,572' },
+        netProfit: { thstrm: '-584,875,358,534', frmtrm: '575,512,415,979', bfefrmtrm: '2,066,046,562,201' },
+        totalAssetsCfs: { thstrm: '42,255,338,580,919', frmtrm: '40,597,344,536,357', bfefrmtrm: '34,038,860,192,967' },
+        totalAssetsOfs: { thstrm: '22,103,874,635,370', frmtrm: '21,552,149,591,601', bfefrmtrm: '19,529,981,403,920' },
+      },
     },
     {
       id: 'lges', label: 'LG에너지솔루션', type: 'battery',
       financials: {
         reportLabel: '1분기보고서', bsnsYear: '2026',
-        revenue: { current: '6234567890000', prev: '5987654321000' },
-        operatingProfit: { current: '234567890000', prev: '198765432000' },
-        netProfit: null,
+        revenue: { current: '6554967000000', prev: '6722711000000' },
+        operatingProfit: { current: '-207755000000', prev: '374673000000' },
+        netProfit: { current: '-944034000000', prev: '226573000000' },
       },
       trend: [
-        { label: '3분기(누적) 2025', revenue: '17600000000000', operatingProfit: '540000000000' },
-        { label: '사업보고서(연간) 2025', revenue: '24100000000000', operatingProfit: '710000000000' },
-        { label: '1분기 2026', revenue: '6234567890000', operatingProfit: '234567890000' },
+        { label: '3분기(누적) 2025', revenue: '19700000000000', operatingProfit: '480000000000' },
+        { label: '사업보고서(연간) 2025', revenue: '26500000000000', operatingProfit: '210000000000' },
+        { label: '1분기 2026', revenue: '6554967000000', operatingProfit: '-207755000000' },
       ],
+      profile: {
+        ceoName: '김동명', address: '서울특별시 영등포구 여의대로 108, 타워 1',
+        homepageUrl: 'www.lgensol.com', estDate: '20201201',
+      },
+      employees: { reportLabel: '사업보고서', bsnsYear: '2025', totalHeadcount: 12922, avgAnnualSalary: 111672726 },
+      summaryFinancials: {
+        bsnsYear: '2025', thstrmNm: '제 6 기', frmtrmNm: '제 5 기', bfefrmtrmNm: '제 4 기',
+        revenue: { thstrm: '23,671,759,000,000', frmtrm: '25,619,585,000,000', bfefrmtrm: '33,745,470,000,000' },
+        operatingProfit: { thstrm: '1,346,120,000,000', frmtrm: '575,387,000,000', bfefrmtrm: '2,163,234,000,000' },
+        netProfit: { thstrm: '80,803,000,000', frmtrm: '338,602,000,000', bfefrmtrm: '1,637,985,000,000' },
+        totalAssetsCfs: { thstrm: '67,147,953,000,000', frmtrm: '60,306,791,000,000', bfefrmtrm: '45,437,144,000,000' },
+        totalAssetsOfs: { thstrm: '31,167,774,000,000', frmtrm: '27,640,810,000,000', bfefrmtrm: '23,545,939,000,000' },
+      },
     },
     {
       id: 'hyundai', label: '현대자동차', type: 'customer',
       financials: null,
       trend: [],
+      profile: null,
+      employees: null,
+      summaryFinancials: null,
     },
+  ],
+};
+
+// ⬇️  AI 재무 리포트가 아직 생성되지 않았을 때 임시로 보여줄 샘플입니다.
+// ⬇️  GEMINI_API_KEY가 설정되면 자동으로 이 샘플 대신 실제 생성된 리포트를 보여줍니다.
+const SAMPLE_FINANCIAL_REPORT = {
+  isSample: true,
+  companies: ['삼성SDI', 'LG에너지솔루션'],
+  summary: '삼성SDI는 2025년 매출 13.3조원, 영업이익 -1.7조원으로 전년(영업이익 3,633억원) 대비 적자 전환했습니다. LG에너지솔루션은 매출 23.7조원으로 전년보다 소폭 줄었지만 영업이익은 1.3조원으로 흑자 전환에 성공해 두 회사의 수익성 흐름이 엇갈렸습니다. 양사 모두 최근 3개년 매출이 지속적으로 감소하는 추세여서 전방 수요 둔화가 공통 리스크로 확인됩니다.',
+  highlights: [
+    { label: '삼성SDI 적자전환', value: '영업이익 -1.7조원 (전기 +3,633억원)', tone: 'danger' },
+    { label: 'LGES 흑자전환', value: '영업이익 1.3조원 (전기 5,754억원)', tone: 'success' },
+    { label: 'LGES 부채비율 상승', value: '86%→95%→129%로 3개년 연속 상승', tone: 'danger' },
+    { label: 'SDI 순이익도 적자', value: '당기순이익 -5,849억원', tone: 'danger' },
+  ],
+  risks: [
+    { title: '전방 수요 둔화', description: '전기차 판매 성장 둔화로 양사 모두 최근 3개년 매출이 지속 감소하고 있어 중장기 매출 회복 여부가 관건입니다.' },
+    { title: 'LGES 재무 레버리지 확대', description: '부채비율이 86%에서 129%까지 상승해 자본 대비 부채 부담이 빠르게 커지고 있습니다.' },
+    { title: '삼성SDI 수익성 악화', description: '매출 감소와 함께 영업이익까지 적자로 전환되어 원가·가동률 관리 부담이 커진 상태입니다.' },
+  ],
+  comparison: [
+    { metric: '매출액', unit: '억원', sdi: 132667, lges: 236718 },
+    { metric: '영업이익', unit: '억원', sdi: -17224, lges: 13461 },
+    { metric: '당기순이익', unit: '억원', sdi: -5849, lges: 808 },
+    { metric: '부채비율', unit: '%', sdi: 79.3, lges: 129.0 },
   ],
 };
 
@@ -275,13 +329,14 @@ export default function App() {
   const [weeklyInsightHistory, setWeeklyInsightHistory] = useState(null);
   const [dartFilings, setDartFilings] = useState(null);
   const [dartFinancials, setDartFinancials] = useState(null);
+  const [financialReport, setFinancialReport] = useState(null);
   const [lastUpdated, setLastUpdated] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeCat, setActiveCat] = useState(null);
   const [activeSub, setActiveSub] = useState(null);
   const [search, setSearch] = useState('');
-  const [activeView, setActiveView] = useState('news'); // 'news' | 'filings' | 'briefing' | 'executive' | 'report'
+  const [activeView, setActiveView] = useState('daily'); // 'daily' | 'news' | 'filings'
 
   const loadData = async () => {
     setLoading(true);
@@ -308,6 +363,11 @@ export default function App() {
         data.dartFinancials && data.dartFinancials.companies && data.dartFinancials.companies.length > 0
           ? data.dartFinancials
           : SAMPLE_DART_FINANCIALS
+      );
+      setFinancialReport(
+        data.financialReport && data.financialReport.comparison && data.financialReport.comparison.length > 0
+          ? data.financialReport
+          : SAMPLE_FINANCIAL_REPORT
       );
       setLastUpdated(data.lastUpdated || '');
     } catch (e) {
@@ -341,6 +401,14 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const goDaily = () => {
+    setActiveView('daily');
+    setActiveCat(null);
+    setActiveSub(null);
+    setSearch('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const goNews = () => {
     setActiveView('news');
     setActiveCat(null);
@@ -349,32 +417,8 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const goBriefing = () => {
-    setActiveView('briefing');
-    setActiveCat(null);
-    setActiveSub(null);
-    setSearch('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const goFilings = () => {
     setActiveView('filings');
-    setActiveCat(null);
-    setActiveSub(null);
-    setSearch('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const goExecutive = () => {
-    setActiveView('executive');
-    setActiveCat(null);
-    setActiveSub(null);
-    setSearch('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const goReport = () => {
-    setActiveView('report');
     setActiveCat(null);
     setActiveSub(null);
     setSearch('');
@@ -401,7 +445,7 @@ export default function App() {
     <div className="bb-app">
       <style>{globalStyles}</style>
 
-      <TopNav lastUpdated={lastUpdated} totalCount={news.length} onLogoClick={goNews} />
+      <TopNav lastUpdated={lastUpdated} totalCount={news.length} onLogoClick={goDaily} />
 
       <div className="bb-layout">
         <Sidebar
@@ -411,11 +455,9 @@ export default function App() {
           activeSub={activeSub}
           onCatClick={handleCatClick}
           onSubClick={handleSubClick}
+          onDailyClick={goDaily}
           onNewsClick={goNews}
           onFilingsClick={goFilings}
-          onBriefingClick={goBriefing}
-          onExecutiveClick={goExecutive}
-          onReportClick={goReport}
         />
 
         <main className="bb-content">
@@ -425,20 +467,12 @@ export default function App() {
             <>
               {activeView === 'news' && !activeCat && <HeroBanner />}
 
-              {activeView === 'news' && activeCat && featured.length > 0 && <ConcernsBanner featured={featured} />}
+              {activeView === 'news' && featured.length > 0 && <ConcernsBanner featured={featured} />}
 
-              {activeView === 'briefing' ? (
-                <BriefingView
-                  weeklyInsight={weeklyInsight}
-                  weeklyInsightHistory={weeklyInsightHistory}
-                  news={news}
-                />
+              {activeView === 'daily' ? (
+                <DailyView data={dailyInsight} weeklyInsightHistory={weeklyInsightHistory} />
               ) : activeView === 'filings' ? (
-                <FilingsView dartFilings={dartFilings} dartFinancials={dartFinancials} />
-              ) : activeView === 'executive' ? (
-                <ExecutiveIssuesView weeklyInsight={weeklyInsight} weeklyInsightHistory={weeklyInsightHistory} />
-              ) : activeView === 'report' ? (
-                <ReportView weeklyInsight={weeklyInsight} news={news} />
+                <FilingsView dartFilings={dartFilings} dartFinancials={dartFinancials} financialReport={financialReport} />
               ) : activeCat ? (
                 <CategoryView
                   category={activeCategory}
@@ -450,11 +484,7 @@ export default function App() {
                   onSubClick={handleSubClick}
                 />
               ) : (
-                <>
-                  <DailySection data={dailyInsight} weeklyInsightHistory={weeklyInsightHistory} />
-                  <NewsSector news={news} featured={featured} onCatClick={handleCatClick} />
-                  <FilingsSector dartFinancials={dartFinancials} dartFilings={dartFilings} onViewAll={goFilings} />
-                </>
+                <HomeView news={news} onCatClick={handleCatClick} />
               )}
             </>
           )}
@@ -482,12 +512,19 @@ function TopNav({ lastUpdated, totalCount, onLogoClick }) {
 }
 
 // ━━━━━━━━━━ Sidebar ━━━━━━━━━━
-function Sidebar({ news, activeView, activeCat, activeSub, onCatClick, onSubClick, onNewsClick, onFilingsClick, onBriefingClick, onExecutiveClick, onReportClick }) {
+function Sidebar({ news, activeView, activeCat, activeSub, onCatClick, onSubClick, onDailyClick, onNewsClick, onFilingsClick }) {
   return (
     <aside className="bb-sidebar">
+      <div className={`bb-menu-item bb-menu-item-root ${activeView === 'daily' ? 'active' : ''}`} onClick={onDailyClick}>
+        <Flame size={16} style={{ marginRight: 9, verticalAlign: -3 }} />
+        오늘의 브리핑
+      </div>
+
+      <div className="bb-menu-divider" />
+
       <div className={`bb-menu-item bb-menu-item-root ${activeView === 'news' && !activeCat ? 'active' : ''}`} onClick={onNewsClick}>
         <Home size={16} style={{ marginRight: 9, verticalAlign: -3 }} />
-        전체 보기
+        뉴스
         <span className="bb-count">{news.length}</span>
       </div>
 
@@ -523,21 +560,9 @@ function Sidebar({ news, activeView, activeCat, activeSub, onCatClick, onSubClic
 
       <div className="bb-menu-divider" />
 
-      <div className={`bb-menu-item ${activeView === 'filings' ? 'active' : ''}`} onClick={onFilingsClick}>
+      <div className={`bb-menu-item bb-menu-item-root ${activeView === 'filings' ? 'active' : ''}`} onClick={onFilingsClick}>
         <Landmark size={16} style={{ marginRight: 9, verticalAlign: -3 }} />
-        특허·공시
-      </div>
-      <div className={`bb-menu-item ${activeView === 'briefing' ? 'active' : ''}`} onClick={onBriefingClick}>
-        <Sparkles size={16} style={{ marginRight: 9, verticalAlign: -3 }} />
-        주간 브리핑
-      </div>
-      <div className={`bb-menu-item ${activeView === 'executive' ? 'active' : ''}`} onClick={onExecutiveClick}>
-        <Flame size={16} style={{ marginRight: 9, verticalAlign: -3 }} />
-        Executive Issues
-      </div>
-      <div className={`bb-menu-item ${activeView === 'report' ? 'active' : ''}`} onClick={onReportClick}>
-        <Download size={16} style={{ marginRight: 9, verticalAlign: -3 }} />
-        AI 리포트
+        공시
       </div>
     </aside>
   );
@@ -559,42 +584,65 @@ function HeroBanner() {
   );
 }
 
-// ━━━━━━━━━━ 오늘의 배터리 브리핑 (첫 페이지 섹션 1) ━━━━━━━━━━
-function DailyKeywords({ keywords }) {
-  if (!keywords || keywords.length === 0) return null;
-  const maxCount = Math.max(...keywords.map(k => (typeof k.count === 'number' ? k.count : 0)), 1);
+// ━━━━━━━━━━ 오늘의 브리핑 (단일 페이지) ━━━━━━━━━━
+function DailyStatBar({ data }) {
+  const articleCount = typeof data.articleCount === 'number' ? data.articleCount : null;
+  const keywordCount = data.keywords?.length || 0;
+  const agendaCount = data.reportAgenda?.length || 0;
   return (
-    <div className="bb-daily-keywords">
-      {keywords.map((k, idx) => {
-        const ratio = typeof k.count === 'number' ? k.count / maxCount : 0.3;
-        return (
-          <span
-            key={idx}
-            className="bb-daily-keyword-chip"
-            style={{ background: `rgba(44, 125, 196, ${0.10 + ratio * 0.28})` }}
-          >
-            {k.keyword}
-            {typeof k.count === 'number' && <em>{k.count}</em>}
-          </span>
-        );
-      })}
+    <div className="bb-daily-statbar">
+      <div className="bb-daily-stat">
+        <div className="bb-daily-stat-value">{articleCount ?? '-'}</div>
+        <div className="bb-daily-stat-label">오늘 분석 기사</div>
+      </div>
+      <div className="bb-daily-stat">
+        <div className="bb-daily-stat-value">{keywordCount}</div>
+        <div className="bb-daily-stat-label">핵심 키워드</div>
+      </div>
+      <div className="bb-daily-stat bb-daily-stat-agenda">
+        <div className="bb-daily-stat-value">{agendaCount}</div>
+        <div className="bb-daily-stat-label">보고안건</div>
+      </div>
     </div>
   );
 }
 
-function DailyCategorySummaries({ summaries }) {
+function DailyKeywordsList({ keywords }) {
+  if (!keywords || keywords.length === 0) return null;
+  return (
+    <div className="bb-daily-block">
+      <div className="bb-daily-block-title">주요 키워드</div>
+      <div className="bb-daily-keyword-list">
+        {keywords.map((k, idx) => (
+          <div className="bb-daily-keyword-row" key={idx}>
+            <div className="bb-daily-keyword-name">
+              {k.keyword}
+              {typeof k.count === 'number' && <span className="bb-daily-keyword-count">{k.count}</span>}
+            </div>
+            {k.headline && <div className="bb-daily-keyword-headline">{k.headline}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DailyCategoryRows({ summaries }) {
   if (!summaries || summaries.length === 0) return null;
   return (
-    <div className="bb-daily-catsum-grid">
-      {summaries.map((s, idx) => {
-        const cat = CATEGORIES.find(c => c.id === s.cat);
-        return (
-          <div className="bb-daily-catsum-card" key={idx}>
-            <div className="bb-daily-catsum-label">{cat ? cat.label : s.cat}</div>
-            <div className="bb-daily-catsum-text">{s.summary}</div>
-          </div>
-        );
-      })}
+    <div className="bb-daily-block">
+      <div className="bb-daily-block-title">카테고리별 동향</div>
+      <div className="bb-daily-catrow-list">
+        {summaries.map((s, idx) => {
+          const cat = CATEGORIES.find(c => c.id === s.cat);
+          return (
+            <div className={`bb-daily-catrow bb-daily-catrow-${s.cat}`} key={idx}>
+              <div className="bb-daily-catrow-label">{cat ? cat.label : s.cat}</div>
+              <div className="bb-daily-catrow-text">{s.summary}</div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -603,12 +651,15 @@ function DailyReportAgenda({ items }) {
   if (!items || items.length === 0) return null;
   return (
     <div className="bb-daily-agenda">
-      <div className="bb-daily-agenda-title"><Target size={14} /> 오늘의 보고안건</div>
+      <div className="bb-daily-agenda-title"><Target size={14} /> 기획그룹 보고안건</div>
       <div className="bb-daily-agenda-list">
         {items.map((item, idx) => (
           <div className="bb-daily-agenda-item" key={idx}>
-            <div className="bb-daily-agenda-item-title">{item.title}</div>
-            {item.reason && <div className="bb-daily-agenda-item-reason">{item.reason}</div>}
+            <div className="bb-daily-agenda-num">{idx + 1}</div>
+            <div>
+              <div className="bb-daily-agenda-item-title">{item.title}</div>
+              {item.reason && <div className="bb-daily-agenda-item-reason">{item.reason}</div>}
+            </div>
           </div>
         ))}
       </div>
@@ -616,78 +667,38 @@ function DailyReportAgenda({ items }) {
   );
 }
 
-function DailyInsight({ data }) {
+// ━━━━━━━━━━ 오늘의 브리핑 (사이드바 최상단 페이지) ━━━━━━━━━━
+function DailyView({ data, weeklyInsightHistory }) {
   if (!data || (!data.keywords?.length && !data.categorySummaries?.length && !data.reportAgenda?.length)) {
-    return null;
+    return (
+      <div className="bb-daily-empty">
+        <Flame size={22} color="#A9A79C" />
+        <div>아직 생성된 오늘의 브리핑이 없습니다.</div>
+      </div>
+    );
   }
 
   return (
-    <div className="bb-daily">
-      <div className="bb-daily-header">
-        <div className="bb-daily-icon"><Flame size={18} color="#2C7DC4" strokeWidth={2.2} /></div>
-        <div style={{ flex: 1 }}>
-          <div className="bb-daily-title">
-            오늘의 배터리 브리핑
-            {data.isSample && <span className="bb-weekly-sample-badge">샘플</span>}
-          </div>
-          <div className="bb-daily-desc">
-            {data.date && <>{data.date} </>}
-            {typeof data.articleCount === 'number' && <>· 오늘 뉴스 {data.articleCount}건 분석 </>}
-            · AI 자동 생성
-          </div>
+    <div className="bb-daily-page">
+      <div className="bb-daily-page-header">
+        <div className="bb-daily-page-title">
+          오늘의 브리핑
+          {data.isSample && <span className="bb-weekly-sample-badge">샘플</span>}
+        </div>
+        <div className="bb-daily-page-desc">
+          {data.date && <>{data.date} </>}· AI 자동 생성
         </div>
       </div>
 
-      <DailyKeywords keywords={data.keywords} />
-      <DailyCategorySummaries summaries={data.categorySummaries} />
-      <DailyReportAgenda items={data.reportAgenda} />
-    </div>
-  );
-}
+      <DailyStatBar data={data} />
 
-// ━━━━━━━━━━ 홈 화면 섹션 헤더 ━━━━━━━━━━
-function HomeSectionHeader({ title, desc }) {
-  return (
-    <div className="bb-home-section-header">
-      <div className="bb-home-section-title">{title}</div>
-      {desc && <div className="bb-home-section-desc">{desc}</div>}
-    </div>
-  );
-}
-
-// ━━━━━━━━━━ 홈 화면 섹션 1: 오늘의 배터리 브리핑 (+ 지난 주요 주제) ━━━━━━━━━━
-function DailySection({ data, weeklyInsightHistory }) {
-  if (!data) return null;
-  return (
-    <div className="bb-home-section">
-      <HomeSectionHeader title="오늘의 배터리 브리핑" desc="오늘의 키워드 · 카테고리별 동향 · 보고안건" />
-      <DailyInsight data={data} />
-      <TopicArchive history={weeklyInsightHistory} />
-    </div>
-  );
-}
-
-// ━━━━━━━━━━ 홈 화면 섹션 2: 뉴스 섹터 ━━━━━━━━━━
-function NewsSector({ news, featured, onCatClick }) {
-  return (
-    <div className="bb-home-section">
-      <HomeSectionHeader title="뉴스 섹터" desc="카테고리별 최신 뉴스" />
-      {featured.length > 0 && <ConcernsBanner featured={featured} />}
-      <HomeView news={news} onCatClick={onCatClick} />
-    </div>
-  );
-}
-
-// ━━━━━━━━━━ 홈 화면 섹션 3: 공시 섹터 (요약 미리보기) ━━━━━━━━━━
-function FilingsSector({ dartFinancials, dartFilings, onViewAll }) {
-  if (!dartFinancials && !dartFilings) return null;
-  return (
-    <div className="bb-home-section">
-      <HomeSectionHeader title="공시 섹터" desc="분기 실적 요약 · 최근 공시" />
-      <QuarterlyFinancials data={dartFinancials} />
-      <div className="bb-filings-viewall" onClick={onViewAll}>
-        전체 공시·특허 페이지 보기 <ChevronRight size={14} />
+      <div className="bb-daily">
+        <DailyKeywordsList keywords={data.keywords} />
+        <DailyCategoryRows summaries={data.categorySummaries} />
+        <DailyReportAgenda items={data.reportAgenda} />
       </div>
+
+      <TopicArchive history={weeklyInsightHistory} />
     </div>
   );
 }
@@ -1249,90 +1260,156 @@ function formatYoyChange(current, prev) {
   return `전년동기比 ${sign}${pct.toFixed(1)}%`;
 }
 
-function FinancialRow({ label, item }) {
-  if (!item) return null;
+function yoyLabel(current, prev) {
+  const c = Number(String(current).replace(/,/g, ''));
+  const p = Number(String(prev).replace(/,/g, ''));
+  if (!isFinite(c) || !isFinite(p) || p === 0) return null;
+  const pct = ((c - p) / Math.abs(p)) * 100;
+  const sign = pct > 0 ? '+' : '';
+  const isDown = c < p;
+  // 적자/흑자 전환 등 부호가 바뀌는 경우는 %보다 상태 설명이 더 이해하기 쉽다.
+  if (c >= 0 && p < 0) return { text: '적자→흑자', down: false };
+  if (c < 0 && p >= 0) return { text: '흑자→적자', down: true };
+  if (c < 0 && p < 0) return { text: c > p ? '적자축소' : '적자확대', down: c <= p };
+  return { text: `${sign}${pct.toFixed(1)}%`, down: isDown };
+}
+
+function formatManwon(won) {
+  if (won === undefined || won === null) return null;
+  const man = Math.round(won / 10000);
+  return `${man.toLocaleString('ko-KR')}만원`;
+}
+
+function toMillionWon(raw) {
+  if (raw === undefined || raw === null) return null;
+  const n = Number(String(raw).replace(/,/g, ''));
+  if (!isFinite(n)) return null;
+  return Math.round(n / 1000000).toLocaleString('ko-KR');
+}
+
+function FinancialTableCell({ item }) {
+  if (!item) return <td className="bb-fintable-empty">-</td>;
   const amount = formatEokAmount(item.current);
-  const yoy = formatYoyChange(item.current, item.prev);
-  if (!amount) return null;
-  const curNum = Number(String(item.current).replace(/,/g, ''));
-  const prevNum = Number(String(item.prev).replace(/,/g, ''));
-  const isDown = isFinite(curNum) && isFinite(prevNum) && curNum < prevNum;
+  const yoy = yoyLabel(item.current, item.prev);
+  if (!amount) return <td className="bb-fintable-empty">-</td>;
   return (
-    <div className="bb-financial-row">
-      <span className="bb-financial-row-label">{label}</span>
-      <span className="bb-financial-row-value">{amount}</span>
-      {yoy && <span className={`bb-financial-row-yoy ${isDown ? 'down' : 'up'}`}>{yoy}</span>}
-    </div>
+    <td className="bb-fintable-num">
+      {amount}
+      {yoy && <span className={`bb-fintable-yoy ${yoy.down ? 'down' : 'up'}`}>{yoy.text}</span>}
+    </td>
   );
 }
 
-function FinancialTrend({ trend }) {
-  if (!trend || trend.length === 0) return null;
-  const revNums = trend.map(t => {
-    const n = Number(String(t.revenue || '').replace(/,/g, ''));
-    return isFinite(n) ? n : 0;
-  });
-  const maxRev = Math.max(...revNums, 1);
+// ━━━━━━━━━━ 실적·인력 비교 표 ━━━━━━━━━━
+function FinancialsTable({ data }) {
+  if (!data || !data.companies || data.companies.length === 0) return null;
+  // 고객사(현대차 등)는 배터리사끼리의 실적·인력 비교 대상이 아니므로 표에서 제외한다.
+  const companies = data.companies.filter(c => c.type !== 'customer');
+  if (companies.length === 0) return null;
+  const reportLabel = companies.find(c => c.financials)?.financials;
   return (
-    <div className="bb-financial-trend">
-      <div className="bb-financial-trend-label">매출 추이</div>
-      <div className="bb-financial-trend-bars">
-        {trend.map((t, idx) => {
-          const ratio = revNums[idx] / maxRev;
-          const eok = formatEokAmount(t.revenue);
-          return (
-            <div className="bb-financial-trend-bar-col" key={idx}>
-              <div className="bb-financial-trend-bar-track">
-                <div
-                  className="bb-financial-trend-bar-fill"
-                  style={{ height: `${Math.max(ratio * 100, 4)}%` }}
-                  title={eok || ''}
-                />
-              </div>
-              <div className="bb-financial-trend-bar-amount">{eok || '-'}</div>
-              <div className="bb-financial-trend-bar-period">{t.label}</div>
-            </div>
-          );
-        })}
+    <div className="bb-financials">
+      <div className="bb-financials-header">
+        <div className="bb-financials-title">
+          <TrendingUp size={15} /> 실적·인력 비교
+          {reportLabel && <span className="bb-fintable-period">매출·이익 {reportLabel.reportLabel}({reportLabel.bsnsYear})</span>}
+          {data.isSample && <span className="bb-weekly-sample-badge">샘플</span>}
+        </div>
       </div>
-    </div>
-  );
-}
-
-function FinancialCard({ company }) {
-  const f = company.financials;
-  return (
-    <div className="bb-financial-card">
-      <div className="bb-financial-card-label">{company.label}</div>
-      {!f ? (
-        <div className="bb-filings-empty">실적 데이터 없음</div>
-      ) : (
-        <>
-          <div className="bb-financial-card-report">{f.reportLabel} ({f.bsnsYear})</div>
-          <div className="bb-financial-rows">
-            <FinancialRow label="매출액" item={f.revenue} />
-            <FinancialRow label="영업이익" item={f.operatingProfit} />
-            <FinancialRow label="당기순이익" item={f.netProfit} />
-          </div>
-          <FinancialTrend trend={company.trend} />
-        </>
+      <div className="bb-fintable-wrap">
+        <table className="bb-fintable">
+          <thead>
+            <tr>
+              <th className="bb-fintable-th-label">회사</th>
+              <th>매출액</th>
+              <th>영업이익</th>
+              <th>순이익</th>
+              <th>종업원수</th>
+              <th>1인평균급여</th>
+            </tr>
+          </thead>
+          <tbody>
+            {companies.map(c => {
+              const f = c.financials;
+              const emp = c.employees;
+              const profileTip = c.profile
+                ? `대표이사: ${c.profile.ceoName || '-'} · ${c.profile.homepageUrl || ''}`
+                : undefined;
+              return (
+                <tr key={c.id}>
+                  <td className="bb-fintable-label" title={profileTip}>{c.label}</td>
+                  <FinancialTableCell item={f?.revenue} />
+                  <FinancialTableCell item={f?.operatingProfit} />
+                  <FinancialTableCell item={f?.netProfit} />
+                  <td className="bb-fintable-num">
+                    {emp ? `${emp.totalHeadcount.toLocaleString('ko-KR')}명` : '-'}
+                  </td>
+                  <td className="bb-fintable-num">
+                    {emp && emp.avgAnnualSalary ? formatManwon(emp.avgAnnualSalary) : '-'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {companies.some(c => c.employees) && (
+        <div className="bb-fintable-footnote">
+          종업원수·급여는 가장 최근 사업/반기보고서 기준 (매출·이익과 조회 시점이 다를 수 있음)
+        </div>
       )}
     </div>
   );
 }
 
-function QuarterlyFinancials({ data }) {
-  if (!data || !data.companies || data.companies.length === 0) return null;
+// ━━━━━━━━━━ 분기별 실적 추이 (연도별 비교) ━━━━━━━━━━
+// fetch-data.cjs가 회사별로 최근 4개 보고서(1분기→반기누적→3분기누적→사업보고서)의
+// 매출/영업이익을 trend 배열에 모아두는데, 기존에는 화면에 표시되지 않고 있었다.
+function FinancialsTrendTable({ data }) {
+  if (!data || !data.companies) return null;
+  const companies = data.companies.filter(c => c.type !== 'customer' && c.trend && c.trend.length > 0);
+  if (companies.length === 0) return null;
   return (
     <div className="bb-financials">
       <div className="bb-financials-header">
         <div className="bb-financials-title">
-          <TrendingUp size={15} /> 분기 실적 요약 (매출·영업이익)
+          <TrendingUp size={15} /> 분기별 실적 추이
           {data.isSample && <span className="bb-weekly-sample-badge">샘플</span>}
         </div>
       </div>
-      <div className="bb-financials-grid">
-        {data.companies.map(c => <FinancialCard key={c.id} company={c} />)}
+      <div className="bb-trend-grid">
+        {companies.map(c => (
+          <div key={c.id} className="bb-trend-company">
+            <div className="bb-trend-company-label">{c.label}</div>
+            <div className="bb-fintable-wrap">
+              <table className="bb-fintable bb-trend-table">
+                <thead>
+                  <tr>
+                    <th className="bb-fintable-th-label">구분</th>
+                    {c.trend.map((t, i) => <th key={i}>{t.label}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="bb-fintable-label">매출액</td>
+                    {c.trend.map((t, i) => (
+                      <td key={i} className="bb-fintable-num">{formatEokAmount(t.revenue) || '-'}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="bb-fintable-label">영업이익</td>
+                    {c.trend.map((t, i) => (
+                      <td key={i} className="bb-fintable-num">{formatEokAmount(t.operatingProfit) || '-'}</td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="bb-fintable-footnote">
+        반기·3분기는 누적 수치입니다 (분기 단독 금액이 아님)
       </div>
     </div>
   );
@@ -1390,8 +1467,135 @@ function PatentSignals({ patents }) {
   );
 }
 
+// ━━━━━━━━━━ 사업부문(세그먼트) 정보 링크 ━━━━━━━━━━
+// DART 구조화 API(재무제표/주요계정)에는 사업부문별 매출 데이터가 없어,
+// 회사 IR 페이지의 실적발표자료 원문 링크로 대신 안내한다.
+const IR_SEGMENT_LINKS = [
+  {
+    id: 'sdi',
+    label: '삼성SDI',
+    desc: '에너지솔루션·전자재료 부문별 매출 비중은 실적발표자료(IR Presentation)에서 확인 가능',
+    url: 'https://www.samsungsdi.co.kr/ir/ir-activity/earning-releases.html',
+  },
+  {
+    id: 'sdi-report',
+    label: '삼성SDI 사업보고서',
+    desc: '"사업의 내용" 및 주석의 영업부문 정보에 상세 매출 구성 수록',
+    url: 'https://www.samsungsdi.co.kr/ir/financial/business-report.html',
+  },
+];
+
+function SegmentInfoLinks() {
+  return (
+    <div className="bb-segment-links">
+      <div className="bb-filings-title">
+        <Landmark size={15} /> 사업부문별 매출(세그먼트) 정보
+      </div>
+      <div className="bb-segment-links-note">
+        DART 공시 API는 회사 전체 합산 매출만 제공하며 사업부문별 세부 매출은 별도 제공하지 않습니다. 부문별 매출 구성은 아래 IR 원문 자료를 참고하세요.
+      </div>
+      <div className="bb-segment-links-list">
+        {IR_SEGMENT_LINKS.map(l => (
+          <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer" className="bb-segment-link-item">
+            <span className="bb-segment-link-label">{l.label}</span>
+            <span className="bb-segment-link-desc">{l.desc}</span>
+            <ChevronRight size={14} />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ━━━━━━━━━━ AI 재무 리포트 (SDI vs LGES 요약 + 비교차트) ━━━━━━━━━━
+// 비교차트 수치는 fetch-data.cjs에서 코드로 직접 계산한 값이며, AI는 summary/highlights/risks
+// 텍스트만 생성한다 (숫자를 AI가 새로 만들어내지 않도록 하기 위함).
+const FINREPORT_COMPANY_META = {
+  sdi: { label: '삼성SDI', color: 'var(--primary)' },
+  lges: { label: 'LG에너지솔루션', color: '#7F8FA6' },
+};
+
+function FinReportBarRow({ row }) {
+  const companyIds = Object.keys(row).filter(k => k !== 'metric');
+  const maxAbs = Math.max(1, ...companyIds.map(id => Math.abs(row[id] || 0)));
+  return (
+    <div className="bb-finreport-bar-row">
+      <div className="bb-finreport-bar-metric">{row.metric}</div>
+      <div className="bb-finreport-bar-track">
+        {companyIds.map(id => {
+          const val = row[id];
+          const meta = FINREPORT_COMPANY_META[id] || { label: id, color: 'var(--ink-faint)' };
+          const widthPct = val === null || val === undefined ? 0 : (Math.abs(val) / maxAbs) * 100;
+          return (
+            <div key={id} className="bb-finreport-bar-line">
+              <span className="bb-finreport-bar-label">{meta.label}</span>
+              <div className="bb-finreport-bar-bg">
+                <div
+                  className="bb-finreport-bar-fill"
+                  style={{ width: `${widthPct}%`, background: val < 0 ? '#C0392B' : meta.color }}
+                />
+              </div>
+              <span className="bb-finreport-bar-value">
+                {val === null || val === undefined
+                  ? '-'
+                  : row.unit === '%'
+                    ? `${val.toLocaleString('ko-KR', { maximumFractionDigits: 1 })}%`
+                    : `${val.toLocaleString('ko-KR')}억원`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FinancialAIReport({ report }) {
+  if (!report || !Array.isArray(report.comparison) || report.comparison.length === 0) return null;
+
+  return (
+    <div className="bb-finreport">
+      <div className="bb-financials-header">
+        <div className="bb-financials-title">
+          <Sparkles size={15} /> AI 재무 리포트 (삼성SDI · LG에너지솔루션)
+          {report.isSample && <span className="bb-weekly-sample-badge">샘플</span>}
+        </div>
+      </div>
+
+      {report.summary && <p className="bb-finreport-summary">{report.summary}</p>}
+
+      {Array.isArray(report.highlights) && report.highlights.length > 0 && (
+        <div className="bb-finreport-highlights">
+          {report.highlights.map((h, i) => (
+            <div key={i} className={`bb-finreport-highlight bb-finreport-highlight-${h.tone || 'neutral'}`}>
+              <div className="bb-finreport-highlight-label">{h.label}</div>
+              <div className="bb-finreport-highlight-value">{h.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="bb-finreport-chart">
+        {report.comparison.map((row, i) => <FinReportBarRow key={i} row={row} />)}
+      </div>
+
+      {Array.isArray(report.risks) && report.risks.length > 0 && (
+        <div className="bb-finreport-risks">
+          <div className="bb-finreport-risks-title">주요 리스크</div>
+          {report.risks.map((r, i) => (
+            <div key={i} className="bb-finreport-risk-item">
+              <div className="bb-finreport-risk-title">{r.title}</div>
+              <div className="bb-finreport-risk-desc">{r.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ━━━━━━━━━━ 특허·공시 페이지 ━━━━━━━━━━
-function FilingsView({ dartFilings, dartFinancials }) {
+function FilingsView({ dartFilings, dartFinancials, financialReport }) {
   return (
     <>
       <div className="bb-page-header">
@@ -1409,7 +1613,10 @@ function FilingsView({ dartFilings, dartFinancials }) {
         </div>
       </div>
 
-      <QuarterlyFinancials data={dartFinancials} />
+      <FinancialAIReport report={financialReport} />
+      <FinancialsTable data={dartFinancials} />
+      <FinancialsTrendTable data={dartFinancials} />
+      <SegmentInfoLinks />
       <DartFilings data={dartFilings} />
       <PatentSignals patents={null} />
     </>
@@ -1657,7 +1864,8 @@ const globalStyles = `
   .bb-total-count { font-size: 13px; color: var(--ink-mute); background: var(--bg); padding: 5px 12px; border-radius: 14px; font-weight: 500; }
 
   /* ━━━ Layout (사이드바 + 콘텐츠) ━━━ */
-  .bb-layout { display: flex; max-width: 1320px; margin: 0 auto; align-items: flex-start; }
+  /* 여백 없이 화면 전체 폭을 채우도록 max-width 제거 (넓은 모니터에서 좌우 빈 공간 방지) */
+  .bb-layout { display: flex; width: 100%; align-items: flex-start; }
   .bb-sidebar {
     width: 220px;
     flex-shrink: 0;
@@ -2168,17 +2376,58 @@ const globalStyles = `
     font-weight: 700;
     color: var(--ink);
   }
-  .bb-financials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .bb-financial-card { border: 1px solid var(--line-light); border-radius: 8px; padding: 14px 16px; }
-  .bb-financial-card-label { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
-  .bb-financial-card-report { font-size: 11.5px; color: var(--ink-faint); margin-bottom: 10px; }
-  .bb-financial-rows { display: flex; flex-direction: column; gap: 8px; }
-  .bb-financial-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-  .bb-financial-row-label { font-size: 12.5px; color: var(--ink-mute); min-width: 60px; flex-shrink: 0; }
-  .bb-financial-row-value { font-size: 14px; font-weight: 700; color: var(--ink); }
-  .bb-financial-row-yoy { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
-  .bb-financial-row-yoy.up { color: #1F7A4C; background: #E7F6EE; }
-  .bb-financial-row-yoy.down { color: #C0392B; background: #FDEDEB; }
+  .bb-fintable-period { font-size: 11px; font-weight: 500; color: var(--ink-faint); margin-left: 8px; }
+  .bb-fintable-wrap { overflow-x: auto; }
+  .bb-fintable { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .bb-fintable th { text-align: right; padding: 6px 8px; font-weight: 700; color: var(--ink); border-bottom: 1.5px solid var(--ink); white-space: nowrap; }
+  .bb-fintable th.bb-fintable-th-label { text-align: left; }
+  .bb-fintable td { padding: 8px; border-bottom: 1px solid var(--line-light); white-space: nowrap; }
+  .bb-fintable tbody tr:nth-child(odd) { background: var(--bg); }
+  .bb-fintable-label { font-weight: 700; color: var(--primary-dark); text-align: left; cursor: help; }
+  .bb-fintable-num { text-align: right; }
+  .bb-fintable-empty { text-align: right; color: var(--ink-faint); }
+  .bb-fintable-yoy { display: inline-block; margin-left: 6px; font-size: 10.5px; font-weight: 600; }
+  .bb-fintable-yoy.up { color: #1F7A4C; }
+  .bb-fintable-yoy.down { color: #C0392B; }
+  .bb-fintable-footnote { font-size: 11px; color: var(--ink-faint); margin-top: 10px; }
+
+  /* ━━━ AI 재무 리포트 ━━━ */
+  .bb-finreport {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+  }
+  .bb-finreport-summary { font-size: 13px; line-height: 1.65; color: var(--ink); margin: 4px 0 16px; }
+  .bb-finreport-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .bb-finreport-highlight { border-radius: 8px; padding: 10px 12px; border: 1px solid var(--line-light); }
+  .bb-finreport-highlight-label { font-size: 11.5px; font-weight: 700; margin-bottom: 4px; }
+  .bb-finreport-highlight-value { font-size: 12.5px; color: var(--ink-mute); line-height: 1.4; }
+  .bb-finreport-highlight-danger { background: #FDEDEB; }
+  .bb-finreport-highlight-danger .bb-finreport-highlight-label { color: #C0392B; }
+  .bb-finreport-highlight-success { background: #E8F2FB; }
+  .bb-finreport-highlight-success .bb-finreport-highlight-label { color: var(--primary-dark); }
+  .bb-finreport-highlight-neutral { background: var(--bg); }
+  .bb-finreport-highlight-neutral .bb-finreport-highlight-label { color: var(--ink); }
+  .bb-finreport-chart { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
+  .bb-finreport-bar-metric { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .bb-finreport-bar-line { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+  .bb-finreport-bar-label { font-size: 11.5px; color: var(--ink-mute); width: 92px; flex-shrink: 0; }
+  .bb-finreport-bar-bg { flex: 1; background: var(--bg); border-radius: 4px; height: 12px; overflow: hidden; }
+  .bb-finreport-bar-fill { height: 100%; border-radius: 4px; }
+  .bb-finreport-bar-value { font-size: 11.5px; font-weight: 600; color: var(--ink); width: 88px; text-align: right; flex-shrink: 0; }
+  .bb-finreport-risks { border-top: 1px solid var(--line-light); padding-top: 14px; }
+  .bb-finreport-risks-title { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .bb-finreport-risk-item { margin-bottom: 8px; }
+  .bb-finreport-risk-title { font-size: 12.5px; font-weight: 700; color: var(--primary-dark); }
+  .bb-finreport-risk-desc { font-size: 12px; color: var(--ink-faint); line-height: 1.5; }
+
+  /* ━━━ 분기별 실적 추이 ━━━ */
+  .bb-trend-grid { display: flex; flex-direction: column; gap: 18px; }
+  .bb-trend-company-label { font-size: 13px; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px; }
+  .bb-trend-table { font-size: 11.5px; }
+  .bb-trend-table th { font-size: 11px; }
 
   /* ━━━ DART 공시 ━━━ */
   .bb-filings {
@@ -2218,6 +2467,29 @@ const globalStyles = `
   .bb-filings-list a { font-size: 13px; color: var(--primary-dark); font-weight: 500; line-height: 1.4; }
   .bb-filings-list a:hover { text-decoration: underline; }
   .bb-filings-date { font-size: 11.5px; color: var(--ink-faint); }
+
+  /* ━━━ 사업부문(세그먼트) 정보 링크 ━━━ */
+  .bb-segment-links {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+  }
+  .bb-segment-links-note { font-size: 12.5px; color: var(--ink-faint); line-height: 1.5; margin: 8px 0 14px; }
+  .bb-segment-links-list { display: flex; flex-direction: column; gap: 10px; }
+  .bb-segment-link-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--line-light);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: inherit;
+  }
+  .bb-segment-link-item:hover { background: var(--bg); border-color: var(--primary); }
+  .bb-segment-link-label { font-size: 13px; font-weight: 700; color: var(--primary-dark); white-space: nowrap; }
+  .bb-segment-link-desc { font-size: 12.5px; color: var(--ink-mute); flex: 1; }
 
   /* ━━━ 특허 동향 (준비 중) ━━━ */
   .bb-patents-placeholder {
@@ -2379,15 +2651,6 @@ const globalStyles = `
   .bb-home-section-title { font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
   .bb-home-section-desc { font-size: 12.5px; color: var(--ink-faint); margin-top: 3px; }
 
-  /* ━━━ 분기 실적 추이 (미니 바 차트) ━━━ */
-  .bb-financial-trend { border-top: 1px dashed var(--line); margin-top: 12px; padding-top: 12px; }
-  .bb-financial-trend-label { font-size: 11.5px; color: var(--ink-faint); margin-bottom: 8px; }
-  .bb-financial-trend-bars { display: flex; align-items: flex-end; gap: 8px; height: 70px; }
-  .bb-financial-trend-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
-  .bb-financial-trend-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; }
-  .bb-financial-trend-bar-fill { width: 100%; background: var(--primary); border-radius: 3px 3px 0 0; min-height: 3px; }
-  .bb-financial-trend-bar-amount { font-size: 10.5px; font-weight: 700; color: var(--ink); margin-top: 5px; white-space: nowrap; }
-  .bb-financial-trend-bar-period { font-size: 9.5px; color: var(--ink-faint); margin-top: 2px; white-space: nowrap; }
 
   /* ━━━ 공시 섹터 전체보기 링크 ━━━ */
   .bb-filings-viewall {
@@ -2504,9 +2767,8 @@ const globalStyles = `
     .bb-cat-grid { grid-template-columns: 1fr; }
     .bb-compare-grid { grid-template-columns: 1fr; }
     .bb-filings-grid { grid-template-columns: 1fr; }
-    .bb-financials-grid { grid-template-columns: 1fr; }
     .bb-daily-catsum-grid { grid-template-columns: 1fr; }
-    .bb-financial-trend-bars { height: 56px; }
+    .bb-fintable { font-size: 11px; }
     .bb-theme-grid { grid-template-columns: 1fr; }
     .bb-heatmap-grid { grid-template-columns: 1fr; }
   }
