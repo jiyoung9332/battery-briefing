@@ -17,6 +17,7 @@ const FIRST_SEEN_CACHE_PATH = path.join('scripts', 'first-seen-cache.json');
 const HISTORY_PATH = path.join('scripts', 'weekly-insight-history.json');
 const DART_CORP_CACHE_PATH = path.join('scripts', 'dart-corp-codes.json');
 const DAILY_INSIGHT_CACHE_PATH = path.join('scripts', 'daily-insight-cache.json');
+const FINANCIAL_REPORT_CACHE_PATH = path.join('scripts', 'financial-report-cache.json');
 const MAX_NEW_SUMMARIES_PER_RUN = 80; // 1회 실행 시 최대 신규 요약 개수 (rate limit 보호)
 const MAX_HISTORY_WEEKS = 8; // 발굴주제 아카이브 보관 주 수
 
@@ -632,14 +633,14 @@ function buildDailyInsightPrompt(articles) {
 
 이 뉴스들을 분석해서 다음 항목을 도출해주세요.
 
-1. keywords: 오늘 뉴스에서 반복적으로 등장하거나 중요하게 다뤄진 핵심 키워드 5개 (중요도·언급 빈도 순)
+1. keywords: 오늘 뉴스에서 반복적으로 등장하거나 중요하게 다뤄진 핵심 키워드 5개 (중요도·언급 빈도 순). 각 키워드마다 그 키워드가 등장한 오늘 기사 중 가장 대표적인 기사의 제목을 headline으로 그대로 인용하세요 (목록에 있는 기사 제목을 그대로 사용, 요약하거나 새로 만들지 마세요).
 2. categorySummaries: 오늘 새 기사가 있었던 카테고리(정책/경쟁사/고객사/자사)별로 핵심 동향을 1~2문장씩 요약. 오늘 해당 카테고리에 뉴스가 없으면 그 카테고리는 제외하세요. cat 필드는 반드시 policy/competitor/customer/own 중 하나만 사용하세요.
 3. reportAgenda: 오늘 뉴스 흐름 중 삼성SDI 소형전지 기획그룹이 임원 또는 유관부서에 보고할 만큼 중요한 안건 1~3개 (없으면 빈 배열). 각각 title(안건 제목)과 reason(왜 보고할 만한지 1문장)을 포함하세요.
 
 반드시 아래 JSON 형식으로만 답변하세요. 다른 설명이나 마크다운 코드블록 없이 순수 JSON 텍스트만 출력하세요.
 
 {
-  "keywords": [{"keyword": "string", "count": number}],
+  "keywords": [{"keyword": "string", "count": number, "headline": "string"}],
   "categorySummaries": [{"cat": "policy 또는 competitor 또는 customer 또는 own", "summary": "string"}],
   "reportAgenda": [{"title": "string", "reason": "string"}]
 }
@@ -685,10 +686,12 @@ async function buildDailyInsight(allNews, firstSeenCache) {
   const today = todayKST();
   const cached = loadJsonCache(DAILY_INSIGHT_CACHE_PATH, null);
 
-  // 스키마가 바뀐 뒤 남아있는 예전 캐시(categorySummaries/reportAgenda 없음)는 걸러내고 다시 생성한다.
+  // 스키마가 바뀐 뒤 남아있는 예전 캐시(categorySummaries/reportAgenda/키워드별 headline 없음)는 걸러내고 다시 생성한다.
   const hasCurrentSchema = cached
     && Array.isArray(cached.categorySummaries)
-    && Array.isArray(cached.reportAgenda);
+    && Array.isArray(cached.reportAgenda)
+    && Array.isArray(cached.keywords)
+    && cached.keywords.every(k => typeof k.headline === 'string' && k.headline.length > 0);
 
   if (cached && cached.date === today && hasCurrentSchema) {
     console.log(`\n📌 일간 인사이트: 오늘(${today}) 캐시 재사용`);
@@ -959,6 +962,135 @@ async function fetchCompanyFinancialTrend(corpCode, desiredCount = 4) {
   return results.reverse(); // 오래된 것부터 최신 순으로
 }
 
+// 회사개황(대표자/주소/홈페이지)
+async function fetchCompanyProfile(corpCode) {
+  try {
+    const url = `https://opendart.fss.or.kr/api/company.json?crtfc_key=${DART_API_KEY}&corp_code=${corpCode}`;
+    const json = await httpsGetJSON(url);
+    if (json.status === '000') {
+      return {
+        ceoName: json.ceo_nm || null,
+        address: json.adres || null,
+        homepageUrl: json.hm_url || null,
+        estDate: json.est_dt || null,
+      };
+    }
+  } catch (e) {
+    // 회사개황 조회 실패, null 반환
+  }
+  return null;
+}
+
+function parseDartNumber(str) {
+  if (!str || str === '-') return null;
+  const n = Number(String(str).replace(/,/g, ''));
+  return isFinite(n) ? n : null;
+}
+
+// 직원현황은 분기보고서(11013/11014)에는 생략되는 경우가 많아, 반기·사업보고서 위주로 조회한다.
+function getEmployeeReportCandidates(today) {
+  const d = new Date(today + 'T00:00:00Z');
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + 1;
+  const candidates = [];
+  if (month >= 8) {
+    candidates.push(['11012', String(year), '반기보고서']);
+    candidates.push(['11011', String(year - 1), '사업보고서']);
+  } else {
+    candidates.push(['11011', String(year - 1), '사업보고서']);
+    candidates.push(['11012', String(year - 1), '반기보고서']);
+  }
+  return candidates;
+}
+
+// 직원현황 - 성별/사업부문별로 나뉜 행을 합산해 전체 인원수·가중평균 급여를 계산한다.
+async function fetchCompanyEmployees(corpCode) {
+  const candidates = getEmployeeReportCandidates(todayKST());
+  for (const [reprtCode, bsnsYear, label] of candidates) {
+    try {
+      const url = `https://opendart.fss.or.kr/api/empSttus.json?crtfc_key=${DART_API_KEY}&corp_code=${corpCode}&bsns_year=${bsnsYear}&reprt_code=${reprtCode}`;
+      const json = await httpsGetJSON(url);
+      if (json.status === '000' && Array.isArray(json.list) && json.list.length > 0) {
+        let totalHeadcount = 0;
+        let totalSalary = 0;
+        let hasData = false;
+        for (const row of json.list) {
+          const sm = parseDartNumber(row.sm);
+          const salary = parseDartNumber(row.fyer_salary_totamt);
+          if (sm !== null) { totalHeadcount += sm; hasData = true; }
+          if (salary !== null) totalSalary += salary;
+        }
+        if (hasData && totalHeadcount > 0) {
+          return {
+            reportLabel: label,
+            bsnsYear,
+            totalHeadcount,
+            avgAnnualSalary: totalSalary > 0 ? Math.round(totalSalary / totalHeadcount) : null,
+          };
+        }
+      }
+    } catch (e) {
+      // 이 후보 실패, 다음 후보로
+    }
+    await sleep(300);
+  }
+  return null;
+}
+
+// 요약 재무현황(당기/전기/전전기) - 사업보고서(11011)에만 전전기(bfefrmtrm)가 나오므로
+// 반드시 사업보고서 기준으로만 조회한다. 가장 최근 사업연도부터 최대 2개 연도까지 시도.
+function pickAccount(rows, name) {
+  return rows.find(r => r.account_nm === name || r.account_nm.startsWith(name));
+}
+
+async function fetchCompanySummaryFinancials(corpCode) {
+  const year = new Date(todayKST() + 'T00:00:00Z').getUTCFullYear();
+  const candidateYears = [year - 1, year - 2];
+
+  for (const y of candidateYears) {
+    try {
+      const url = `https://opendart.fss.or.kr/api/fnlttSinglAcnt.json?crtfc_key=${DART_API_KEY}&corp_code=${corpCode}&bsns_year=${y}&reprt_code=11011`;
+      const json = await httpsGetJSON(url);
+      if (json.status === '000' && Array.isArray(json.list) && json.list.length > 0) {
+        const cfsRows = json.list.filter(r => r.fs_div === 'CFS');
+        const ofsRows = json.list.filter(r => r.fs_div === 'OFS');
+        const revenue = pickAccount(cfsRows, '매출액');
+        const opProfit = pickAccount(cfsRows, '영업이익');
+        const netProfit = pickAccount(cfsRows, '당기순이익');
+        const assetsCfs = pickAccount(cfsRows, '자산총계');
+        const assetsOfs = pickAccount(ofsRows, '자산총계');
+        const liabilitiesCfs = pickAccount(cfsRows, '부채총계');
+        const equityCfs = pickAccount(cfsRows, '자본총계');
+        if (!revenue && !opProfit && !assetsCfs) {
+          await sleep(300);
+          continue;
+        }
+        const ref = revenue || opProfit || netProfit || assetsCfs;
+        const toRow = (item) => item
+          ? { thstrm: item.thstrm_amount, frmtrm: item.frmtrm_amount, bfefrmtrm: item.bfefrmtrm_amount }
+          : null;
+        return {
+          bsnsYear: String(y),
+          thstrmNm: ref.thstrm_nm || null,
+          frmtrmNm: ref.frmtrm_nm || null,
+          bfefrmtrmNm: ref.bfefrmtrm_nm || null,
+          revenue: toRow(revenue),
+          operatingProfit: toRow(opProfit),
+          netProfit: toRow(netProfit),
+          totalAssetsCfs: toRow(assetsCfs),
+          totalAssetsOfs: toRow(assetsOfs),
+          liabilitiesCfs: toRow(liabilitiesCfs),
+          equityCfs: toRow(equityCfs),
+        };
+      }
+    } catch (e) {
+      // 이 연도 실패, 다음 후보로
+    }
+    await sleep(300);
+  }
+  return null;
+}
+
 async function fetchDartFinancials(corpCodeMap) {
   if (!DART_API_KEY) return null;
 
@@ -966,20 +1098,168 @@ async function fetchDartFinancials(corpCodeMap) {
   for (const company of DART_COMPANIES) {
     const corpCode = corpCodeMap[company.id];
     if (!corpCode) {
-      companies.push({ id: company.id, label: company.label, type: company.type, financials: null, trend: [] });
+      companies.push({ id: company.id, label: company.label, type: company.type, financials: null, trend: [], profile: null, employees: null, summaryFinancials: null });
       continue;
     }
     try {
       const financials = await fetchCompanyFinancials(corpCode);
       const trend = await fetchCompanyFinancialTrend(corpCode, 4);
-      companies.push({ id: company.id, label: company.label, type: company.type, financials, trend });
-      console.log(`  ✓ ${company.label} 실적 조회: ${financials ? financials.reportLabel + ' (' + financials.bsnsYear + ')' : '데이터 없음'} · 추이 ${trend.length}개`);
+      const profile = await fetchCompanyProfile(corpCode);
+      const employees = await fetchCompanyEmployees(corpCode);
+      const summaryFinancials = await fetchCompanySummaryFinancials(corpCode);
+      companies.push({ id: company.id, label: company.label, type: company.type, financials, trend, profile, employees, summaryFinancials });
+      console.log(`  ✓ ${company.label} 실적 조회: ${financials ? financials.reportLabel + ' (' + financials.bsnsYear + ')' : '데이터 없음'} · 추이 ${trend.length}개 · 직원 ${employees ? employees.totalHeadcount + '명' : '데이터 없음'} · 요약재무 ${summaryFinancials ? summaryFinancials.bsnsYear : '없음'}`);
     } catch (e) {
       console.warn(`  ✗ ${company.label} 실적 조회 오류: ${e.message}`);
-      companies.push({ id: company.id, label: company.label, type: company.type, financials: null, trend: [] });
+      companies.push({ id: company.id, label: company.label, type: company.type, financials: null, trend: [], profile: null, employees: null, summaryFinancials: null });
     }
   }
   return { generatedAt: new Date().toISOString(), companies };
+}
+
+// ━━━━━━━━━━━━━━━━ AI 재무 리포트 (SDI/LGES 비교 요약 + 차트용 데이터) ━━━━━━━━━━━━━━━━
+// 비교 차트 수치는 절대 AI에게 계산시키지 않고 여기서 코드로 직접 계산한다.
+// AI는 이미 계산된 숫자를 근거로 요약문·하이라이트·리스크 "텍스트"만 생성한다.
+function eokRound(raw) {
+  if (raw === undefined || raw === null) return null;
+  const n = Number(String(raw).replace(/,/g, ''));
+  if (!isFinite(n)) return null;
+  return Math.round(n / 100000000); // 원 -> 억원
+}
+
+// 부채비율(%) = 부채총계 / 자본총계 * 100. 재무안정성(레버리지) 지표.
+function debtRatioPct(item) {
+  if (!item) return null;
+  const calc = (liab, equity) => {
+    const l = Number(String(liab).replace(/,/g, ''));
+    const e = Number(String(equity).replace(/,/g, ''));
+    if (!isFinite(l) || !isFinite(e) || e === 0) return null;
+    return Math.round((l / e) * 1000) / 10; // 소수점 1자리
+  };
+  return calc(item.liabilities, item.equity);
+}
+
+function buildDebtRatioRow(sf) {
+  if (!sf || !sf.liabilitiesCfs || !sf.equityCfs) return null;
+  const at = (period) => debtRatioPct({
+    liabilities: sf.liabilitiesCfs[period],
+    equity: sf.equityCfs[period],
+  });
+  return { thstrm: at('thstrm'), frmtrm: at('frmtrm'), bfefrmtrm: at('bfefrmtrm') };
+}
+
+function buildComparisonData(companies) {
+  const metrics = [
+    { key: 'revenue', label: '매출액', unit: '억원' },
+    { key: 'operatingProfit', label: '영업이익', unit: '억원' },
+    { key: 'netProfit', label: '당기순이익', unit: '억원' },
+  ];
+  const rows = metrics.map(m => {
+    const row = { metric: m.label, unit: m.unit };
+    for (const c of companies) {
+      const item = c.summaryFinancials && c.summaryFinancials[m.key];
+      row[c.id] = item ? eokRound(item.thstrm) : null;
+    }
+    return row;
+  });
+
+  const debtRow = { metric: '부채비율', unit: '%' };
+  let hasDebtRow = false;
+  for (const c of companies) {
+    const ratio = buildDebtRatioRow(c.summaryFinancials);
+    debtRow[c.id] = ratio ? ratio.thstrm : null;
+    if (ratio) hasDebtRow = true;
+  }
+  if (hasDebtRow) rows.push(debtRow);
+
+  return rows;
+}
+
+function buildFinancialReportPrompt(companies) {
+  const fmt = (item) => item
+    ? `당기 ${eokRound(item.thstrm)}억원 (전기 ${eokRound(item.frmtrm)}억원, 전전기 ${eokRound(item.bfefrmtrm)}억원)`
+    : '데이터 없음';
+  const fmtPct = (row) => row
+    ? `당기 ${row.thstrm ?? '-'}% (전기 ${row.frmtrm ?? '-'}%, 전전기 ${row.bfefrmtrm ?? '-'}%)`
+    : '데이터 없음';
+
+  const lines = companies.map(c => {
+    const sf = c.summaryFinancials;
+    if (!sf) return `[${c.label}] 데이터 없음`;
+    const debtRow = buildDebtRatioRow(sf);
+    return `[${c.label}] (${sf.thstrmNm || sf.bsnsYear}기 사업보고서 기준)\n- 매출액: ${fmt(sf.revenue)}\n- 영업이익: ${fmt(sf.operatingProfit)}\n- 당기순이익: ${fmt(sf.netProfit)}\n- 연결 자산총액: ${fmt(sf.totalAssetsCfs)}\n- 부채비율(부채총계/자본총계): ${fmtPct(debtRow)}`;
+  }).join('\n\n');
+
+  return `당신은 배터리 산업 재무 담당 애널리스트입니다. 아래는 DART 사업보고서에서 조회한 삼성SDI와 LG에너지솔루션의 최근 3개년(당기/전기/전전기) 요약 재무 데이터입니다. 주어진 숫자만 근거로 사용하고 없는 숫자를 만들어내지 마세요.
+
+${lines}
+
+다음 항목을 도출해주세요.
+1. summary: 두 회사의 최근 실적 흐름과 리스크를 비교하는 3~5문장 요약 (숫자를 인용할 때는 위에 주어진 숫자만 사용)
+2. highlights: 핵심 포인트 3~4개. 각각 label(4~10자 라벨), value(간단한 상태/수치 설명), tone(danger 위험·적자·감소, success 긍정적 흐름, neutral 중립 중 하나)
+3. risks: 두 회사에 공통되거나 개별적인 재무 리스크 요인 1~3개. 각각 title, description(1~2문장)
+
+반드시 아래 JSON 형식으로만 답변하세요. 다른 설명이나 마크다운 코드블록 없이 순수 JSON 텍스트만 출력하세요.
+
+{
+  "summary": "string",
+  "highlights": [{"label": "string", "value": "string", "tone": "danger 또는 success 또는 neutral"}],
+  "risks": [{"title": "string", "description": "string"}]
+}`;
+}
+
+async function generateFinancialReportText(companies) {
+  const prompt = buildFinancialReportPrompt(companies);
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const result = await callGeminiJSON(prompt, { temperature: 0.3, maxOutputTokens: 1200 });
+      if (!Array.isArray(result.highlights) || !Array.isArray(result.risks) || typeof result.summary !== 'string') {
+        throw new Error('응답 형식이 예상과 다름 (summary/highlights/risks 필요)');
+      }
+      return { summary: result.summary, highlights: result.highlights, risks: result.risks };
+    } catch (e) {
+      lastError = e;
+      console.warn(`  ✗ AI 재무 리포트 시도 ${attempt}/3 실패: ${e.message}`);
+      if (attempt < 3) await sleep(6000 * attempt);
+    }
+  }
+  throw lastError;
+}
+
+async function buildFinancialReport(dartFinancials) {
+  if (!dartFinancials || !Array.isArray(dartFinancials.companies)) return null;
+  const companies = dartFinancials.companies.filter(c => c.type === 'battery' && c.summaryFinancials);
+  if (companies.length === 0) return null;
+
+  const comparison = buildComparisonData(companies);
+  // 데이터가 바뀌면(새 사업보고서 반영 등) 캐시를 새로 만들기 위한 서명
+  const signature = companies.map(c => `${c.id}:${c.summaryFinancials.thstrmNm || c.summaryFinancials.bsnsYear}`).join('|');
+  const today = todayKST();
+  const cached = loadJsonCache(FINANCIAL_REPORT_CACHE_PATH, null);
+
+  if (cached && cached.signature === signature && cached.date === today) {
+    console.log('  📌 AI 재무 리포트: 캐시 재사용');
+    return { ...cached, comparison };
+  }
+
+  if (!GEMINI_API_KEY) {
+    console.warn('  ⚠ GEMINI_API_KEY 없음. AI 재무 리포트 텍스트 생성은 건너뜁니다 (비교차트 데이터는 유지).');
+    return cached ? { ...cached, comparison } : { comparison, summary: null, highlights: [], risks: [] };
+  }
+
+  try {
+    console.log('  🧠 AI 재무 리포트 생성 중...');
+    await sleep(4000);
+    const text = await generateFinancialReportText(companies);
+    const report = { date: today, signature, generatedAt: new Date().toISOString(), companies: companies.map(c => c.label), comparison, ...text };
+    saveJsonCache(FINANCIAL_REPORT_CACHE_PATH, report);
+    console.log(`  ✓ AI 재무 리포트 생성 완료: 하이라이트 ${text.highlights.length}개, 리스크 ${text.risks.length}개`);
+    return report;
+  } catch (e) {
+    console.warn(`  ⚠ AI 재무 리포트 생성 실패: ${e.message} - 이전 캐시 유지`);
+    return cached ? { ...cached, comparison } : { comparison, summary: null, highlights: [], risks: [] };
+  }
 }
 
 // ━━━━━━━━━━━━━━━━ 메인 실행 ━━━━━━━━━━━━━━━━
@@ -1033,6 +1313,15 @@ async function fetchDartFinancials(corpCodeMap) {
       console.warn(`⚠ DART 수집 실패: ${e.message}`);
     }
 
+    // AI 재무 리포트 (SDI/LGES 요약 재무현황 기반 요약문 + 비교차트 데이터)
+    let financialReport = null;
+    console.log('\n📑 AI 재무 리포트 생성 중...');
+    try {
+      financialReport = await buildFinancialReport(dartFinancials);
+    } catch (e) {
+      console.warn(`⚠ AI 재무 리포트 생성 실패: ${e.message}`);
+    }
+
     const featured = allNews.filter(n => n.featured).slice(0, 4);
 
     const data = {
@@ -1043,6 +1332,7 @@ async function fetchDartFinancials(corpCodeMap) {
       weeklyInsightHistory: weeklyInsightHistory,
       dartFilings: dartFilings,
       dartFinancials: dartFinancials,
+      financialReport: financialReport,
       lastUpdated: new Date().toLocaleString('ko-KR', {
         timeZone: 'Asia/Seoul',
         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -1060,6 +1350,7 @@ async function fetchDartFinancials(corpCodeMap) {
     console.log(`📌 일간 인사이트: ${dailyInsight ? '있음 (' + dailyInsight.date + ')' : '없음'}`);
     console.log(`🏛️ DART 공시: ${dartFilings ? dartFilings.companies.length + '개사' : '없음 (DART_API_KEY 미설정)'}`);
     console.log(`💰 DART 분기 실적: ${dartFinancials ? dartFinancials.companies.length + '개사' : '없음'}`);
+    console.log(`📑 AI 재무 리포트: ${financialReport && financialReport.summary ? '있음' : (financialReport ? '비교차트만' : '없음')}`);
     console.log(`📁 저장: public/data.json`);
   } catch (e) {
     console.error('❌ Error:', e);
