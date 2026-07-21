@@ -45,7 +45,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for f in scripts/ai-cache.json scripts/first-seen-cache.json scripts/weekly-insight-history.json scripts/dart-corp-codes.json scripts/daily-insight-cache.json; do
+          for f in scripts/ai-cache.json scripts/first-seen-cache.json scripts/weekly-insight-history.json scripts/dart-corp-codes.json scripts/daily-insight-cache.json scripts/financial-report-cache.json; do
             [ -f "$f" ] && git add "$f"
           done
           if ! git diff --staged --quiet; then
