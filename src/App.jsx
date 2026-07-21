@@ -2407,8 +2407,8 @@ const globalStyles = `
   .bb-financials-title {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 14px;
+    gap: 8px;
+    font-size: 17px;
     font-weight: 700;
     color: var(--ink);
   }
@@ -2435,29 +2435,29 @@ const globalStyles = `
     padding: 20px 24px;
     margin-bottom: 22px;
   }
-  .bb-finreport-summary { font-size: 13px; line-height: 1.65; color: var(--ink); margin: 4px 0 16px; }
-  .bb-finreport-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
-  .bb-finreport-highlight { border-radius: 8px; padding: 10px 12px; border: 1px solid var(--line-light); }
-  .bb-finreport-highlight-label { font-size: 11.5px; font-weight: 700; margin-bottom: 4px; }
-  .bb-finreport-highlight-value { font-size: 12.5px; color: var(--ink-mute); line-height: 1.4; }
+  .bb-finreport-summary { font-size: 15px; line-height: 1.7; color: var(--ink); margin: 4px 0 18px; }
+  .bb-finreport-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 22px; }
+  .bb-finreport-highlight { border-radius: 8px; padding: 12px 14px; border: 1px solid var(--line-light); }
+  .bb-finreport-highlight-label { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .bb-finreport-highlight-value { font-size: 14px; color: var(--ink-mute); line-height: 1.45; }
   .bb-finreport-highlight-danger { background: #FDEDEB; }
   .bb-finreport-highlight-danger .bb-finreport-highlight-label { color: #C0392B; }
   .bb-finreport-highlight-success { background: #E8F2FB; }
   .bb-finreport-highlight-success .bb-finreport-highlight-label { color: var(--primary-dark); }
   .bb-finreport-highlight-neutral { background: var(--bg); }
   .bb-finreport-highlight-neutral .bb-finreport-highlight-label { color: var(--ink); }
-  .bb-finreport-chart { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
-  .bb-finreport-bar-metric { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
-  .bb-finreport-bar-line { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-  .bb-finreport-bar-label { font-size: 11.5px; color: var(--ink-mute); width: 92px; flex-shrink: 0; }
-  .bb-finreport-bar-bg { flex: 1; background: var(--bg); border-radius: 4px; height: 12px; overflow: hidden; }
+  .bb-finreport-chart { display: flex; flex-direction: column; gap: 18px; margin-bottom: 18px; }
+  .bb-finreport-bar-metric { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .bb-finreport-bar-line { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .bb-finreport-bar-label { font-size: 13px; color: var(--ink-mute); width: 104px; flex-shrink: 0; }
+  .bb-finreport-bar-bg { flex: 1; background: var(--bg); border-radius: 4px; height: 14px; overflow: hidden; }
   .bb-finreport-bar-fill { height: 100%; border-radius: 4px; }
-  .bb-finreport-bar-value { font-size: 11.5px; font-weight: 600; color: var(--ink); width: 88px; text-align: right; flex-shrink: 0; }
-  .bb-finreport-risks { border-top: 1px solid var(--line-light); padding-top: 14px; }
-  .bb-finreport-risks-title { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
-  .bb-finreport-risk-item { margin-bottom: 8px; }
-  .bb-finreport-risk-title { font-size: 12.5px; font-weight: 700; color: var(--primary-dark); }
-  .bb-finreport-risk-desc { font-size: 12px; color: var(--ink-faint); line-height: 1.5; }
+  .bb-finreport-bar-value { font-size: 13px; font-weight: 600; color: var(--ink); width: 100px; text-align: right; flex-shrink: 0; }
+  .bb-finreport-risks { border-top: 1px solid var(--line-light); padding-top: 16px; }
+  .bb-finreport-risks-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+  .bb-finreport-risk-item { margin-bottom: 10px; }
+  .bb-finreport-risk-title { font-size: 14px; font-weight: 700; color: var(--primary-dark); }
+  .bb-finreport-risk-desc { font-size: 13px; color: var(--ink-faint); line-height: 1.55; }
 
   /* ━━━ 분기별 실적 추이 ━━━ */
   .bb-trend-grid { display: flex; flex-direction: column; gap: 18px; }
